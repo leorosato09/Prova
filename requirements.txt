@@ -1,10 +1,1 @@
 Flask==3.0.3
-blinker==1.8.2
-click==8.1.7
-itsdangerous==2.2.0
-Jinja2==3.1.4
-MarkupSafe==2.1.5
-mysqlclient==2.2.4  # Se stai usando MySQL come database
-psycopg2==2.9.9  # Se stai usando PostgreSQL come database
-psycopg2-binary==2.9.9  # Alternativa a psycopg2 per PostgreSQL
-Werkzeug==3.0.3
