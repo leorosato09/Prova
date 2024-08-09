@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template_string
 
+from flask import Flask, request, render_template_string
+
 app = Flask(__name__)
 
 # Route principale per chiedere il nome
@@ -11,12 +13,25 @@ def chiedi_nome():
             return f'Ciao, {nome}!'
         else:
             return 'Nome non inserito!', 400  # Restituisce un errore 400 se il nome non è fornito
-    return '''
-        <form method="post">
-            Inserisci il tuo nome qui: <input type="text" name="nome">
-            <input type="submit" value="Invia">
-        </form>
-    '''
+    return render_template_string('''
+        <!DOCTYPE html>
+        <html lang="it">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Chiedi Nome</title>
+            <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+        </head>
+        <body>
+            <form method="post">
+                <label for="nome">Inserisci il tuo nome qui:</label>
+                <input type="text" id="nome" name="nome">
+                <input type="submit" value="Invia">
+            </form>
+            <p>Buongiorno, la vita è bella!</p> <!-- Messaggio fisso sotto l'input -->
+        </body>
+        </html>
+    ''')
 
 # Route per la pulizia della cache
 @app.route('/clear-cache')
