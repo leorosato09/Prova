@@ -1,1 +1,13 @@
-Flask==2.0.1
+asgiref==3.8.1
+blinker==1.8.2
+cx_Oracle==8.3.0
+Django==5.1
+django-allauth==64.0.0
+django-crispy-forms==2.3
+django-debug-toolbar==4.4.6
+django-extensions==3.2.3
+djangorestframework==3.15.2
+mysqlclient==2.2.4
+psycopg2==2.9.9
+psycopg2-binary==2.9.9
+sqlparse==0.5.1
