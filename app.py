@@ -14,6 +14,10 @@ def chiedi_nome():
             <input type="submit" value="Invia">
         </form>
     '''
+@app.route('/clear-cache')
+def clear_cache():
+    print("Cache cleared!")  # Messaggio di debug o logica di pulizia cache
+    return "Cache cleared!"
 
 if __name__ == '__main__':
     app.run(debug=True)
