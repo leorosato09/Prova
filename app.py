@@ -8,6 +8,7 @@ def chiedi_nome():
     if request.method == 'POST':
         nome = request.form['nome']
         return f'Ciao, {nome}!'
+        print "Ciao comunque!"
     return '''
         <form method="post">
             Inserisci il tuo nome qui: <input type="text" name="nome">
