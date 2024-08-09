@@ -9,7 +9,7 @@ def chiedi_nome():
         return f'Ciao, {nome}!'
     return '''
         <form method="post">
-            Inserisci il tuo nome: <input type="text" name="nome">
+            Inserisci il tuo nome qui: <input type="text" name="nome">
             <input type="submit" value="Invia">
         </form>
     '''
