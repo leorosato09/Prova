@@ -1,7 +1,6 @@
 asgiref==3.8.1
 blinker==1.8.2
 click==8.1.7
-cx_Oracle==8.3.0
 Django==5.1
 django-allauth==64.0.0
 django-crispy-forms==2.3
