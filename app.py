@@ -1,3 +1,6 @@
+import pymysql
+pymysql.install_as_MySQLdb()
+
 from flask import Flask, request, render_template_string, redirect, url_for
 import sqlite3
 from datetime import datetime, timedelta
@@ -10,6 +13,7 @@ def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
+
 
 # Funzione per calcolare l'età e i giorni mancanti al compleanno
 def calcola_eta_e_giorni(data_nascita):

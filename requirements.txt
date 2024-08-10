@@ -12,10 +12,11 @@ Flask==3.0.3
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==2.1.5
-mysqlclient==2.2.4
+PyMySQL==2.2.4
 psycopg2==2.9.9
 psycopg2-binary==2.9.9
 setuptools==72.1.0
 sqlparse==0.5.1
 Werkzeug==3.0.3
 wheel==0.44.0
+mysqlclient== --only-binary :all:
