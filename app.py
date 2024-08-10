@@ -1,7 +1,5 @@
 from flask import Flask, request, render_template_string
 
-from flask import Flask, request, render_template_string
-
 app = Flask(__name__)
 
 # Route principale per chiedere il nome
@@ -10,9 +8,23 @@ def chiedi_nome():
     if request.method == 'POST':
         nome = request.form.get('nome')
         if nome:
-            return f'Ciao, {nome}!'
+            return render_template_string('''
+                <!DOCTYPE html>
+                <html lang="it">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Risultato</title>
+                </head>
+                <body>
+                    <p>Ciao, {{ nome }}!</p>
+                    <p>L'operazione è andata a buon fine</p> <!-- Messaggio di successo -->
+                </body>
+                </html>
+            ''', nome=nome)
         else:
             return 'Nome non inserito!', 400  # Restituisce un errore 400 se il nome non è fornito
+
     return render_template_string('''
         <!DOCTYPE html>
         <html lang="it">
@@ -20,7 +32,6 @@ def chiedi_nome():
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Chiedi Nome</title>
-            <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
         </head>
         <body>
             <form method="post">
