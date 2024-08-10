@@ -1,6 +1,21 @@
 from flask import Flask, request, render_template_string
+from datetime import datetime, date
 
 app = Flask(__name__)
+
+# Funzione per calcolare l'età e i giorni mancanti al compleanno
+def calcola_eta_e_giorni(data_nascita):
+    oggi = date.today()
+    data_nascita = datetime.strptime(data_nascita, '%Y-%m-%d').date()
+    eta = oggi.year - data_nascita.year - ((oggi.month, oggi.day) < (data_nascita.month, data_nascita.day))
+
+    prossimo_compleanno = date(oggi.year, data_nascita.month, data_nascita.day)
+    if prossimo_compleanno < oggi:
+        prossimo_compleanno = date(oggi.year + 1, data_nascita.month, data_nascita.day)
+
+    giorni_mancanti = (prossimo_compleanno - oggi).days
+
+    return eta, giorni_mancanti
 
 # Route principale per chiedere nome, cognome e data di nascita
 @app.route('/', methods=['GET', 'POST'])
@@ -9,7 +24,9 @@ def chiedi_dati():
         nome = request.form.get('nome')
         cognome = request.form.get('cognome')
         data_nascita = request.form.get('data_nascita')
+
         if nome and cognome and data_nascita:
+            eta, giorni_mancanti = calcola_eta_e_giorni(data_nascita)
             return render_template_string('''
                 <!DOCTYPE html>
                 <html lang="it">
@@ -20,11 +37,12 @@ def chiedi_dati():
                 </head>
                 <body>
                     <p>Ciao, {{ nome }} {{ cognome }}!</p>
-                    <p>Sei nato/a il {{ data_nascita }}.</p>
-                    <p>L'operazione è andata a buon fine</p> <!-- Messaggio di successo -->
+                    <p>Hai {{ eta }} anni.</p>
+                    <p>Mancano {{ giorni_mancanti }} giorni al tuo prossimo compleanno.</p>
+                    <p>L'operazione è andata a buon fine.</p>
                 </body>
                 </html>
-            ''', nome=nome, cognome=cognome, data_nascita=data_nascita)
+            ''', nome=nome, cognome=cognome, eta=eta, giorni_mancanti=giorni_mancanti)
 
     return render_template_string('''
         <!DOCTYPE html>
