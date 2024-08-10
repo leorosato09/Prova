@@ -22,8 +22,6 @@ def chiedi_nome():
                 </body>
                 </html>
             ''', nome=nome)
-        else:
-            return 'Nome non inserito!', 400  # Restituisce un errore 400 se il nome non è fornito
 
     return render_template_string('''
         <!DOCTYPE html>
@@ -32,13 +30,28 @@ def chiedi_nome():
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Chiedi Nome</title>
+            <style>
+                .error { border: 2px solid red; } /* Stile per casella di input rossa */
+            </style>
+            <script>
+                function validateForm() {
+                    var nome = document.getElementById('nome').value;
+                    if (nome == "") {
+                        document.getElementById('nome').classList.add('error');
+                        document.getElementById('error-message').innerText = "Per favore inserisci un nome.";
+                        return false;
+                    }
+                    return true;
+                }
+            </script>
         </head>
         <body>
-            <form method="post">
+            <form method="post" onsubmit="return validateForm()">
                 <label for="nome">Inserisci il tuo nome qui:</label>
                 <input type="text" id="nome" name="nome">
                 <input type="submit" value="Invia">
             </form>
+            <p id="error-message" style="color:red;"></p> <!-- Messaggio di errore -->
             <p>Buongiorno, la vita è bella!</p> <!-- Messaggio fisso sotto l'input -->
         </body>
         </html>
