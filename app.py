@@ -2,17 +2,24 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 from flask import Flask, request, render_template_string, redirect, url_for
-import sqlite3
+import MySQLdb  # Sostituisci 'sqlite3' con 'MySQLdb'
 from datetime import datetime, timedelta
 import traceback
 
 app = Flask(__name__)
 
-# Funzione per connettersi al database SQLite
+# Funzione per connettersi al database MySQL
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
+    conn = MySQLdb.connect(
+        host="localhost",    # Sostituisci con il nome host del tuo server MySQL
+        user="tuo_utente",   # Sostituisci con il tuo nome utente MySQL
+        password="tua_password",  # Sostituisci con la tua password MySQL
+        db="nome_del_database",  # Sostituisci con il nome del tuo database MySQL
+        charset='utf8mb4',
+        cursorclass=MySQLdb.cursors.DictCursor
+    )
     return conn
+
 
 
 # Funzione per calcolare l'età e i giorni mancanti al compleanno
