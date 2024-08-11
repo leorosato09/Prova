@@ -2,27 +2,23 @@ import pymysql
 pymysql.install_as_MySQLdb()
 
 from flask import Flask, request, render_template_string, redirect, url_for
-import MySQLdb  # Sostituisci 'sqlite3' con 'MySQLdb'
-from datetime import datetime, timedelta
+import MySQLdb
+from datetime import datetime
 import traceback
 
 app = Flask(__name__)
 
-# Funzione per connettersi al database MySQL
 def get_db_connection():
     conn = MySQLdb.connect(
-        host="localhost",    # Sostituisci con il nome host del tuo server MySQL
-        user="tuo_utente",   # Sostituisci con il tuo nome utente MySQL
-        password="tua_password",  # Sostituisci con la tua password MySQL
-        db="nome_del_database",  # Sostituisci con il nome del tuo database MySQL
+        host="localhost",
+        user="root",
+        password="nuova_password",
+        db="nome_del_database",
         charset='utf8mb4',
         cursorclass=MySQLdb.cursors.DictCursor
     )
     return conn
 
-
-
-# Funzione per calcolare l'età e i giorni mancanti al compleanno
 def calcola_eta_e_giorni(data_nascita):
     today = datetime.today()
     born = datetime.strptime(data_nascita, '%Y-%m-%d')
@@ -33,7 +29,6 @@ def calcola_eta_e_giorni(data_nascita):
     giorni_al_compleanno = (next_birthday - today).days
     return eta, giorni_al_compleanno
 
-# Route principale per chiedere nome, cognome e data di nascita
 @app.route('/', methods=['GET', 'POST'])
 def chiedi_dati():
     try:
@@ -45,7 +40,7 @@ def chiedi_dati():
             data_nascita = request.form['data_nascita']
 
             if nome and cognome and data_nascita:
-                conn.execute('INSERT INTO utenti (nome, cognome, data_nascita) VALUES (?, ?, ?)',
+                conn.execute('INSERT INTO utenti (nome, cognome, data_nascita) VALUES (%s, %s, %s)',
                              (nome, cognome, data_nascita))
                 conn.commit()
                 return redirect(url_for('chiedi_dati'))
@@ -53,19 +48,19 @@ def chiedi_dati():
         query_nome = request.form.get('query_nome', '')
         query_cognome = request.form.get('query_cognome', '')
         query_data_nascita = request.form.get('query_data_nascita', '')
-        sort_by = request.form.get('sort_by', 'eta_asc')  # Ordinamento di default per età crescente
+        sort_by = request.form.get('sort_by', 'eta_asc')
 
         sql_query = 'SELECT * FROM utenti WHERE 1=1'
         params = []
 
         if query_nome:
-            sql_query += ' AND nome LIKE ?'
+            sql_query += ' AND nome LIKE %s'
             params.append(f'%{query_nome}%')
         if query_cognome:
-            sql_query += ' AND cognome LIKE ?'
+            sql_query += ' AND cognome LIKE %s'
             params.append(f'%{query_cognome}%')
         if query_data_nascita:
-            sql_query += ' AND data_nascita = ?'
+            sql_query += ' AND data_nascita = %s'
             params.append(query_data_nascita)
 
         utenti = conn.execute(sql_query, params).fetchall()
@@ -82,7 +77,6 @@ def chiedi_dati():
                 'giorni_al_compleanno': giorni_al_compleanno
             })
 
-        # Ordinamento della lista in base ai criteri selezionati
         if sort_by == 'eta_asc':
             utenti_info.sort(key=lambda u: u['eta'])
         elif sort_by == 'eta_desc':
@@ -195,15 +189,14 @@ def chiedi_dati():
 
     except Exception as e:
         print(f"Errore: {e}")
-        traceback.print_exc()  # Stampa la traccia completa dell'errore
+        traceback.print_exc()
         return "Si è verificato un errore nel server", 500
 
-# Route per la modifica dei dati
 @app.route('/modifica/<int:id>', methods=['GET', 'POST'])
 def modifica(id):
     try:
         conn = get_db_connection()
-        utente = conn.execute('SELECT * FROM utenti WHERE id = ?', (id,)).fetchone()
+        utente = conn.execute('SELECT * FROM utenti WHERE id = %s', (id,)).fetchone()
 
         if request.method == 'POST':
             nome = request.form['nome']
@@ -211,7 +204,7 @@ def modifica(id):
             data_nascita = request.form['data_nascita']
 
             if nome and cognome and data_nascita:
-                conn.execute('UPDATE utenti SET nome = ?, cognome = ?, data_nascita = ? WHERE id = ?',
+                conn.execute('UPDATE utenti SET nome = %s, cognome = %s, data_nascita = %s WHERE id = %s',
                              (nome, cognome, data_nascita, id))
                 conn.commit()
                 conn.close()
@@ -248,33 +241,31 @@ def modifica(id):
 
     except Exception as e:
         print(f"Errore: {e}")
-        traceback.print_exc()  # Stampa la traccia completa dell'errore
+        traceback.print_exc()
         return "Si è verificato un errore nel server", 500
 
-# Route per eliminare un utente
 @app.route('/elimina/<int:id>', methods=['GET', 'POST'])
 def elimina(id):
     try:
         conn = get_db_connection()
-        conn.execute('DELETE FROM utenti WHERE id = ?', (id,))
+        conn.execute('DELETE FROM utenti WHERE id = %s', (id,))
         conn.commit()
         conn.close()
         return redirect(url_for('chiedi_dati'))
     except Exception as e:
         print(f"Errore: {e}")
-        traceback.print_exc()  # Stampa la traccia completa dell'errore
+        traceback.print_exc()
         return "Si è verificato un errore nel server", 500
 
 if __name__ == '__main__':
-    # Creare il database e la tabella se non esistono
     try:
         conn = get_db_connection()
         conn.execute('''
             CREATE TABLE IF NOT EXISTS utenti (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                cognome TEXT NOT NULL,
-                data_nascita TEXT NOT NULL
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(255) NOT NULL,
+                cognome VARCHAR(255) NOT NULL,
+                data_nascita DATE NOT NULL
             )
         ''')
         conn.close()
