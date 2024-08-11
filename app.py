@@ -12,14 +12,19 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 
 def get_db_connection():
-    conn = mysql.connector.connect(
-        host="tyduzbv3ggpf15sx.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
-        port=3306,
-        user="z1pk4hwisr6sc9mr",
-        password="p3p8l90k2yrgbui4",
-        database="g2tia6n3y31yoggm"
-    )
-    return conn
+    try:
+        conn = mysql.connector.connect(
+            host="tyduzbv3ggpf15sx.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+            port=3306,
+            user="z1pk4hwisr6sc9mr",
+            password="p3p8l90k2yrgbui4",
+            database="g2tia6n3y31yoggm"
+        )
+        return conn
+    except mysql.connector.Error as err:
+        logging.error(f"Errore di connessione al database: {err}")
+        raise
+
 
 def calcola_eta_e_giorni(data_nascita):
     oggi = datetime.now()
