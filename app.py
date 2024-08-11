@@ -1,38 +1,46 @@
-import pymysql
-pymysql.install_as_MySQLdb()
-
-from flask import Flask, request, render_template_string, redirect, url_for
-import MySQLdb
-from datetime import datetime
+from flask import Flask, request, redirect, url_for, render_template_string
+import logging
 import traceback
+from datetime import datetime
+import os
+from dotenv import load_dotenv
+import mysql.connector
+
+# Carica le variabili d'ambiente dal file .env
+load_dotenv()
 
 app = Flask(__name__)
 
+# Configura il logging
+logging.basicConfig(level=logging.DEBUG)
+
 def get_db_connection():
-    conn = MySQLdb.connect(
-        host="MacBook-Pro-di-Leonardo.local",
-        user="root",
-        password="nuova_password",
-        db="progetto",
-        charset='utf8mb4',
-        cursorclass=MySQLdb.cursors.DictCursor
+    conn = mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USERNAME'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_DATABASE'),
+        port=os.getenv('DB_PORT', 3306)  # Usa la porta di default 3306 se non specificata
     )
     return conn
 
 def calcola_eta_e_giorni(data_nascita):
-    today = datetime.today()
-    born = datetime.strptime(data_nascita, '%Y-%m-%d')
-    eta = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
-    next_birthday = born.replace(year=today.year)
-    if next_birthday < today:
-        next_birthday = next_birthday.replace(year=today.year + 1)
-    giorni_al_compleanno = (next_birthday - today).days
+    oggi = datetime.now()
+    if isinstance(data_nascita, str):
+        data_nascita = datetime.strptime(data_nascita, '%Y-%m-%d').date()
+
+    eta = oggi.year - data_nascita.year - ((oggi.month, oggi.day) < (data_nascita.month, data_nascita.day))
+    prossimo_compleanno = datetime(oggi.year, data_nascita.month, data_nascita.day)
+    if prossimo_compleanno < oggi:
+        prossimo_compleanno = datetime(oggi.year + 1, data_nascita.month, data_nascita.day)
+    giorni_al_compleanno = (prossimo_compleanno - oggi).days
     return eta, giorni_al_compleanno
 
 @app.route('/', methods=['GET', 'POST'])
 def chiedi_dati():
     try:
         conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
         if request.method == 'POST' and 'nome' in request.form:
             nome = request.form['nome']
@@ -40,8 +48,8 @@ def chiedi_dati():
             data_nascita = request.form['data_nascita']
 
             if nome and cognome and data_nascita:
-                conn.execute('INSERT INTO utenti (nome, cognome, data_nascita) VALUES (%s, %s, %s)',
-                             (nome, cognome, data_nascita))
+                cursor.execute('INSERT INTO utenti (nome, cognome, data_nascita) VALUES (%s, %s, %s)',
+                               (nome, cognome, data_nascita))
                 conn.commit()
                 return redirect(url_for('chiedi_dati'))
 
@@ -63,11 +71,15 @@ def chiedi_dati():
             sql_query += ' AND data_nascita = %s'
             params.append(query_data_nascita)
 
-        utenti = conn.execute(sql_query, params).fetchall()
+        cursor.execute(sql_query, params)
+        utenti = cursor.fetchall()
         utenti_info = []
 
         for utente in utenti:
-            eta, giorni_al_compleanno = calcola_eta_e_giorni(utente['data_nascita'])
+            data_nascita = utente['data_nascita']
+            if isinstance(data_nascita, str):
+                data_nascita = datetime.strptime(data_nascita, '%Y-%m-%d').date()
+            eta, giorni_al_compleanno = calcola_eta_e_giorni(data_nascita)
             utenti_info.append({
                 'id': utente['id'],
                 'nome': utente['nome'],
@@ -188,24 +200,26 @@ def chiedi_dati():
         ''', utenti_info=utenti_info, query_nome=query_nome, query_cognome=query_cognome, query_data_nascita=query_data_nascita, sort_by=sort_by)
 
     except Exception as e:
-        print(f"Errore: {e}")
-        traceback.print_exc()
+        logging.error(f"Errore: {e}")
+        logging.error(traceback.format_exc())
         return "Si è verificato un errore nel server", 500
 
 @app.route('/modifica/<int:id>', methods=['GET', 'POST'])
 def modifica(id):
     try:
         conn = get_db_connection()
-        utente = conn.execute('SELECT * FROM utenti WHERE id = %s', (id,)).fetchone()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute('SELECT * FROM utenti WHERE id = %s', (id,))
+        utente = cursor.fetchone()
 
         if request.method == 'POST':
             nome = request.form['nome']
             cognome = request.form['cognome']
             data_nascita = request.form['data_nascita']
 
-            if nome and cognome and data_nascita:
-                conn.execute('UPDATE utenti SET nome = %s, cognome = %s, data_nascita = %s WHERE id = %s',
-                             (nome, cognome, data_nascita, id))
+            if nome, cognome, and data_nascita:
+                cursor.execute('UPDATE utenti SET nome = %s, cognome = %s, data_nascita = %s WHERE id = %s',
+                               (nome, cognome, data_nascita, id))
                 conn.commit()
                 conn.close()
                 return redirect(url_for('chiedi_dati'))
@@ -229,47 +243,36 @@ def modifica(id):
                     <label for="cognome">Cognome:</label>
                     <input type="text" id="cognome" name="cognome" value="{{ utente['cognome'] }}" required>
                     <br>
-                    <label for="data_nascita">Data di Nascita:</label>
+                    <label for="data_nascita">Data di nascita:</label>
                     <input type="date" id="data_nascita" name="data_nascita" value="{{ utente['data_nascita'] }}" required>
                     <br>
-                    <input type="submit" value="Aggiorna">
+                    <input type="submit" value="Salva modifiche">
                 </form>
-                <a href="/">Torna alla Home</a>
+                <br>
+                <a href="/">Torna indietro</a>
             </body>
             </html>
         ''', utente=utente)
 
     except Exception as e:
-        print(f"Errore: {e}")
-        traceback.print_exc()
+        logging.error(f"Errore: {e}")
+        logging.error(traceback.format_exc())
         return "Si è verificato un errore nel server", 500
 
-@app.route('/elimina/<int:id>', methods=['GET', 'POST'])
+@app.route('/elimina/<int:id>')
 def elimina(id):
     try:
         conn = get_db_connection()
-        conn.execute('DELETE FROM utenti WHERE id = %s', (id,))
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM utenti WHERE id = %s', (id,))
         conn.commit()
         conn.close()
         return redirect(url_for('chiedi_dati'))
+
     except Exception as e:
-        print(f"Errore: {e}")
-        traceback.print_exc()
+        logging.error(f"Errore: {e}")
+        logging.error(traceback.format_exc())
         return "Si è verificato un errore nel server", 500
 
-if __name__ == '__main__':
-    try:
-        conn = get_db_connection()
-        conn.execute('''
-            CREATE TABLE IF NOT EXISTS utenti (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(255) NOT NULL,
-                cognome VARCHAR(255) NOT NULL,
-                data_nascita DATE NOT NULL
-            )
-        ''')
-        conn.close()
-        app.run(debug=True)
-    except Exception as e:
-        print(f"Errore durante la creazione del database o l'avvio del server: {e}")
-        traceback.print_exc()
+if __name__ == "__main__":
+    app.run(debug=True)
