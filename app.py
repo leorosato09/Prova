@@ -10,10 +10,10 @@ app = Flask(__name__)
 
 def get_db_connection():
     conn = MySQLdb.connect(
-        host="localhost",
+        host="MacBook-Pro-di-Leonardo.local",
         user="root",
         password="nuova_password",
-        db="nome_del_database",
+        db="progetto",
         charset='utf8mb4',
         cursorclass=MySQLdb.cursors.DictCursor
     )
