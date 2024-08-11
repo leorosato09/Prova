@@ -217,7 +217,7 @@ def modifica(id):
             cognome = request.form['cognome']
             data_nascita = request.form['data_nascita']
 
-            if nome, cognome, and data_nascita:
+            if nome and cognome and data_nascita:
                 cursor.execute('UPDATE utenti SET nome = %s, cognome = %s, data_nascita = %s WHERE id = %s',
                                (nome, cognome, data_nascita, id))
                 conn.commit()
