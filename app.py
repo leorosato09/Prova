@@ -1,26 +1,23 @@
+import os
+import mysql.connector
 from flask import Flask, request, redirect, url_for, render_template_string
 import logging
 import traceback
 from datetime import datetime
-import os
 from dotenv import load_dotenv
-import mysql.connector
-
-# Carica le variabili d'ambiente dal file .env
-load_dotenv()
-
-app = Flask(__name__)
 
 # Configura il logging
 logging.basicConfig(level=logging.DEBUG)
 
+app = Flask(__name__)
+
 def get_db_connection():
     conn = mysql.connector.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USERNAME'),
-        password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_DATABASE'),
-        port=os.getenv('DB_PORT', 3306)  # Usa la porta di default 3306 se non specificata
+        host="tyduzbv3ggpf15sx.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
+        port=3306,
+        user="z1pk4hwisr6sc9mr",
+        password="p3p8l90k2yrgbui4",
+        database="g2tia6n3y31yoggm"
     )
     return conn
 
