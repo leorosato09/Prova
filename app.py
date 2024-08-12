@@ -13,7 +13,7 @@ app = Flask(__name__)
 def get_db_connection():
     try:
         client = MongoClient(
-            "mongodb+srv://leorosato09:leo09@progettodb.vrk4x.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=True"
+            "mongodb+srv://leorosato09:Nibefile04@progettodb.vrk4x.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=true"
         )
         db = client['ProgettoDB']
         return db
@@ -262,4 +262,4 @@ def elimina(id):
         return "Si è verificato un errore nel server", 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
