@@ -1,10 +1,9 @@
-import os
-import mysql.connector
 from flask import Flask, request, redirect, url_for, render_template_string
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 import logging
 import traceback
 from datetime import datetime
-from dotenv import load_dotenv
 
 # Configura il logging
 logging.basicConfig(level=logging.DEBUG)
@@ -13,18 +12,12 @@ app = Flask(__name__)
 
 def get_db_connection():
     try:
-        conn = mysql.connector.connect(
-            host="tyduzbv3ggpf15sx.cbetxkdyhwsb.us-east-1.rds.amazonaws.com",
-            port=3306,
-            user="z1pk4hwisr6sc9mr",
-            password="p3p8l90k2yrgbui4",
-            database="g2tia6n3y31yoggm"
-        )
-        return conn
-    except mysql.connector.Error as err:
+        client = MongoClient("mongodb+srv://leorosato09:leo09@progettodb.vrk4x.mongodb.net/?retryWrites=true&w=majority&appName=ProgettoDB")
+        db = client['ProgettoDB']
+        return db
+    except Exception as err:
         logging.error(f"Errore di connessione al database: {err}")
         raise
-
 
 def calcola_eta_e_giorni(data_nascita):
     oggi = datetime.now()
@@ -41,8 +34,8 @@ def calcola_eta_e_giorni(data_nascita):
 @app.route('/', methods=['GET', 'POST'])
 def chiedi_dati():
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        db = get_db_connection()
+        collection = db['utenti']
 
         if request.method == 'POST' and 'nome' in request.form:
             nome = request.form['nome']
@@ -50,9 +43,11 @@ def chiedi_dati():
             data_nascita = request.form['data_nascita']
 
             if nome and cognome and data_nascita:
-                cursor.execute('INSERT INTO utenti (nome, cognome, data_nascita) VALUES (%s, %s, %s)',
-                               (nome, cognome, data_nascita))
-                conn.commit()
+                collection.insert_one({
+                    'nome': nome,
+                    'cognome': cognome,
+                    'data_nascita': data_nascita
+                })
                 return redirect(url_for('chiedi_dati'))
 
         query_nome = request.form.get('query_nome', '')
@@ -60,30 +55,24 @@ def chiedi_dati():
         query_data_nascita = request.form.get('query_data_nascita', '')
         sort_by = request.form.get('sort_by', 'eta_asc')
 
-        sql_query = 'SELECT * FROM utenti WHERE 1=1'
-        params = []
-
+        query = {}
         if query_nome:
-            sql_query += ' AND nome LIKE %s'
-            params.append(f'%{query_nome}%')
+            query['nome'] = {'$regex': query_nome, '$options': 'i'}
         if query_cognome:
-            sql_query += ' AND cognome LIKE %s'
-            params.append(f'%{query_cognome}%')
+            query['cognome'] = {'$regex': query_cognome, '$options': 'i'}
         if query_data_nascita:
-            sql_query += ' AND data_nascita = %s'
-            params.append(query_data_nascita)
+            query['data_nascita'] = query_data_nascita
 
-        cursor.execute(sql_query, params)
-        utenti = cursor.fetchall()
+        utenti_data = list(collection.find(query))
+
         utenti_info = []
-
-        for utente in utenti:
+        for utente in utenti_data:
             data_nascita = utente['data_nascita']
             if isinstance(data_nascita, str):
                 data_nascita = datetime.strptime(data_nascita, '%Y-%m-%d').date()
             eta, giorni_al_compleanno = calcola_eta_e_giorni(data_nascita)
             utenti_info.append({
-                'id': utente['id'],
+                'id': str(utente['_id']),
                 'nome': utente['nome'],
                 'cognome': utente['cognome'],
                 'data_nascita': utente['data_nascita'],
@@ -97,8 +86,6 @@ def chiedi_dati():
             utenti_info.sort(key=lambda u: u['eta'], reverse=True)
         elif sort_by == 'compleanno':
             utenti_info.sort(key=lambda u: u['giorni_al_compleanno'])
-
-        conn.close()
 
         return render_template_string('''
             <!DOCTYPE html>
@@ -206,13 +193,11 @@ def chiedi_dati():
         logging.error(traceback.format_exc())
         return "Si è verificato un errore nel server", 500
 
-@app.route('/modifica/<int:id>', methods=['GET', 'POST'])
+@app.route('/modifica/<id>', methods=['GET', 'POST'])
 def modifica(id):
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute('SELECT * FROM utenti WHERE id = %s', (id,))
-        utente = cursor.fetchone()
+        db = get_db_connection()
+        collection = db['utenti']
 
         if request.method == 'POST':
             nome = request.form['nome']
@@ -220,13 +205,13 @@ def modifica(id):
             data_nascita = request.form['data_nascita']
 
             if nome and cognome and data_nascita:
-                cursor.execute('UPDATE utenti SET nome = %s, cognome = %s, data_nascita = %s WHERE id = %s',
-                               (nome, cognome, data_nascita, id))
-                conn.commit()
-                conn.close()
+                collection.update_one(
+                    {'_id': ObjectId(id)},
+                    {'$set': {'nome': nome, 'cognome': cognome, 'data_nascita': data_nascita}}
+                )
                 return redirect(url_for('chiedi_dati'))
 
-        conn.close()
+        utente = collection.find_one({'_id': ObjectId(id)})
 
         return render_template_string('''
             <!DOCTYPE html>
@@ -261,14 +246,12 @@ def modifica(id):
         logging.error(traceback.format_exc())
         return "Si è verificato un errore nel server", 500
 
-@app.route('/elimina/<int:id>')
+@app.route('/elimina/<id>')
 def elimina(id):
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM utenti WHERE id = %s', (id,))
-        conn.commit()
-        conn.close()
+        db = get_db_connection()
+        collection = db['utenti']
+        collection.delete_one({'_id': ObjectId(id)})
         return redirect(url_for('chiedi_dati'))
 
     except Exception as e:
