@@ -4,16 +4,23 @@ from flask_login import LoginManager, login_user, login_required, current_user, 
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
 from datetime import datetime
+import pymongo
+import certifi
+import time
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Sostituisci con una chiave segreta sicura
 
 # Configura il database MongoDB
-app.config["MONGO_URI"] = "mongodb+srv://leorosato09:Nibefile04@progettodb.vrk4x.mongodb.net/ProgettoDB"
-mongo = PyMongo(app)
+app.config["MONGO_URI"] = "mongodb+srv://leorosato09:Nibefile04@progettodb.vrk4x.mongodb.net/ProgettoDB?retryWrites=true&w=majority"
+mongo = PyMongo(app, tlsCAFile=certifi.where())
 db = mongo.db
 users_collection = db['users']
 utenti_collection = db['utenti']
+
+# Crea indici sui campi di ricerca
+users_collection.create_index([('username', pymongo.ASCENDING)])
+utenti_collection.create_index([('nome', pymongo.ASCENDING), ('cognome', pymongo.ASCENDING), ('data_nascita', pymongo.ASCENDING)])
 
 # Configura Flask-Login
 login_manager = LoginManager()
@@ -28,7 +35,7 @@ class User(UserMixin):
 
     @staticmethod
     def find_by_username(username):
-        user_data = users_collection.find_one({'username': username})
+        user_data = users_collection.find_one({'username': username}, {'_id': 1, 'username': 1, 'password': 1})
         if user_data:
             return User(user_data)
         return None
@@ -89,7 +96,18 @@ def magazzino():
     if query_data_nascita:
         query['data_nascita'] = query_data_nascita
 
-    utenti_data = list(utenti_collection.find(query))
+    sort_order = []
+    if sort_by == 'eta_asc':
+        sort_order = [('eta', pymongo.ASCENDING)]
+    elif sort_by == 'eta_desc':
+        sort_order = [('eta', pymongo.DESCENDING)]
+    elif sort_by == 'compleanno':
+        sort_order = [('giorni_al_compleanno', pymongo.ASCENDING)]
+
+    start_time = time.time()
+    utenti_data = list(utenti_collection.find(query).sort(sort_order))
+    end_time = time.time()
+    print(f"Tempo di esecuzione: {end_time - start_time} secondi")
 
     utenti_info = []
     for utente in utenti_data:
@@ -103,13 +121,6 @@ def magazzino():
             'eta': eta,
             'giorni_al_compleanno': giorni_al_compleanno
         })
-
-    if sort_by == 'eta_asc':
-        utenti_info.sort(key=lambda u: u['eta'])
-    elif sort_by == 'eta_desc':
-        utenti_info.sort(key=lambda u: u['eta'], reverse=True)
-    elif sort_by == 'compleanno':
-        utenti_info.sort(key=lambda u: u['giorni_al_compleanno'])
 
     return render_template('magazzino.html', utenti_info=utenti_info)
 
@@ -210,4 +221,4 @@ def account():
     return render_template('account.html')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
