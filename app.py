@@ -12,7 +12,9 @@ app = Flask(__name__)
 
 def get_db_connection():
     try:
-        client = MongoClient("mongodb+srv://leorosato09:leo09@progettodb.vrk4x.mongodb.net/?retryWrites=true&w=majority&appName=ProgettoDB")
+        client = MongoClient(
+            "mongodb+srv://leorosato09:leo09@progettodb.vrk4x.mongodb.net/?retryWrites=true&w=majority&tlsAllowInvalidCertificates=True"
+        )
         db = client['ProgettoDB']
         return db
     except Exception as err:
