@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Gestione Magazzino{% endblock %}
+
+{% block content %}
+<h1 style="text-align:center;">Gestione Magazzino</h1>
+<div class="container">
+    <div class="form-container">
+        <form method="post">
+            <label for="nome">Inserisci il tuo nome qui:</label>
+            <input type="text" id="nome" name="nome" required>
+            <br>
+            <label for="cognome">Inserisci il tuo cognome qui:</label>
+            <input type="text" id="cognome" name="cognome" required>
+            <br>
+            <label for="data_nascita">Inserisci la tua data di nascita:</label>
+            <input type="date" id="data_nascita" name="data_nascita" required>
+            <br>
+            <input type="submit" value="Invia">
+        </form>
+    </div>
+    <div class="search-container">
+        <form method="post">
+            <label for="query_nome">Cerca per nome:</label>
+            <input type="text" id="query_nome" name="query_nome" value="{{ query_nome }}">
+            <br>
+            <label for="query_cognome">Cerca per cognome:</label>
+            <input type="text" id="query_cognome" name="query_cognome" value="{{ query_cognome }}">
+            <br>
+            <label for="query_data_nascita">Cerca per data di nascita:</label>
+            <input type="date" id="query_data_nascita" name="query_data_nascita" value="{{ query_data_nascita }}">
+            <br>
+            <input type="submit" value="Cerca">
+        </form>
+    </div>
+</div>
+
+<div class="user-list">
+    <h2>Utenti Registrati</h2>
+    <div class="sort-options">
+        <form method="post">
+            <label for="sort_by">Ordina per:</label>
+            <select name="sort_by" id="sort_by" onchange="this.form.submit()">
+                <option value="eta_asc" {% if sort_by == 'eta_asc' %}selected{% endif %}>Età crescente</option>
+                <option value="eta_desc" {% if sort_by == 'eta_desc' %}selected{% endif %}>Età decrescente</option>
+                <option value="compleanno" {% if sort_by == 'compleanno' %}selected{% endif %}>Compleanno</option>
+            </select>
+        </form>
+    </div>
+    <ul>
+        {% for utente in utenti_info %}
+            <li>
+                {{ utente.nome }} {{ utente.cognome }} - Data di nascita: {{ utente.data_nascita }} - Età: {{ utente.eta }} anni - Mancano {{ utente.giorni_al_compleanno }} giorni al tuo compleanno
+                <br>
+                <a href="/modifica/{{ utente.id }}">Modifica</a> |
+                <a href="/elimina/{{ utente.id }}">Elimina</a>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
