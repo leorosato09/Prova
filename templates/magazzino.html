@@ -5,13 +5,13 @@
 {% block content %}
 <h1 style="text-align:center;">Gestione Magazzino</h1>
 <div class="container">
-    <div class="form-container">
+    <div class="form-container left-form">
         <form method="post">
             <label for="nome">Inserisci il tuo nome qui:</label>
-            <input type="text" id="nome" name="nome" required>
+            <input type="text" id="nome" name="nome" class="input-small" required>
             <br>
             <label for="cognome">Inserisci il tuo cognome qui:</label>
-            <input type="text" id="cognome" name="cognome" required>
+            <input type="text" id="cognome" name="cognome" class="input-small" required>
             <br>
             <label for="data_nascita">Inserisci la tua data di nascita:</label>
             <input type="date" id="data_nascita" name="data_nascita" required>
@@ -19,13 +19,13 @@
             <input type="submit" value="Invia">
         </form>
     </div>
-    <div class="search-container">
+    <div class="form-container right-form">
         <form method="post">
             <label for="query_nome">Cerca per nome:</label>
-            <input type="text" id="query_nome" name="query_nome" value="{{ query_nome }}">
+            <input type="text" id="query_nome" name="query_nome" class="input-small" value="{{ query_nome }}">
             <br>
             <label for="query_cognome">Cerca per cognome:</label>
-            <input type="text" id="query_cognome" name="query_cognome" value="{{ query_cognome }}">
+            <input type="text" id="query_cognome" name="query_cognome" class="input-small" value="{{ query_cognome }}">
             <br>
             <label for="query_data_nascita">Cerca per data di nascita:</label>
             <input type="date" id="query_data_nascita" name="query_data_nascita" value="{{ query_data_nascita }}">

@@ -16,11 +16,11 @@ app.config["MONGO_URI"] = "mongodb+srv://leorosato09:Nibefile04@progettodb.vrk4x
 mongo = PyMongo(app, tlsCAFile=certifi.where())
 db = mongo.db
 users_collection = db['users']
-utenti_collection = db['utenti']
+bottiglie_collection = db['bottiglie']  # Cambia qui da 'utenti' a 'bottiglie'
 
 # Crea indici sui campi di ricerca
 users_collection.create_index([('username', pymongo.ASCENDING)])
-utenti_collection.create_index([('nome', pymongo.ASCENDING), ('cognome', pymongo.ASCENDING), ('data_nascita', pymongo.ASCENDING)])
+bottiglie_collection.create_index([('nome', pymongo.ASCENDING), ('cognome', pymongo.ASCENDING), ('data_nascita', pymongo.ASCENDING)])
 
 # Configura Flask-Login
 login_manager = LoginManager()
@@ -76,7 +76,7 @@ def magazzino():
         data_nascita = request.form['data_nascita']
 
         if nome and cognome and data_nascita:
-            utenti_collection.insert_one({
+            bottiglie_collection.insert_one({
                 'nome': nome,
                 'cognome': cognome,
                 'data_nascita': data_nascita
@@ -105,24 +105,24 @@ def magazzino():
         sort_order = [('giorni_al_compleanno', pymongo.ASCENDING)]
 
     start_time = time.time()
-    utenti_data = list(utenti_collection.find(query).sort(sort_order))
+    bottiglie_data = list(bottiglie_collection.find(query).sort(sort_order))  # Cambia qui
     end_time = time.time()
     print(f"Tempo di esecuzione: {end_time - start_time} secondi")
 
-    utenti_info = []
-    for utente in utenti_data:
-        data_nascita = utente['data_nascita']
+    bottiglie_info = []
+    for bottiglia in bottiglie_data:
+        data_nascita = bottiglia['data_nascita']
         eta, giorni_al_compleanno = calcola_eta_e_giorni(data_nascita)
-        utenti_info.append({
-            'id': str(utente['_id']),
-            'nome': utente['nome'],
-            'cognome': utente['cognome'],
-            'data_nascita': utente['data_nascita'],
+        bottiglie_info.append({
+            'id': str(bottiglia['_id']),
+            'nome': bottiglia['nome'],
+            'cognome': bottiglia['cognome'],
+            'data_nascita': bottiglia['data_nascita'],
             'eta': eta,
             'giorni_al_compleanno': giorni_al_compleanno
         })
 
-    return render_template('magazzino.html', utenti_info=utenti_info)
+    return render_template('magazzino.html', bottiglie_info=bottiglie_info)
 
 @app.route('/modifica/<id>', methods=['GET', 'POST'])
 @login_required
@@ -133,19 +133,19 @@ def modifica(id):
         data_nascita = request.form['data_nascita']
 
         if nome and cognome and data_nascita:
-            utenti_collection.update_one(
+            bottiglie_collection.update_one(
                 {'_id': ObjectId(id)},
                 {'$set': {'nome': nome, 'cognome': cognome, 'data_nascita': data_nascita}}
             )
             return redirect(url_for('magazzino'))
 
-    utente = utenti_collection.find_one({'_id': ObjectId(id)})
-    return render_template('modifica.html', utente=utente)
+    bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
+    return render_template('modifica.html', bottiglia=bottiglia)
 
 @app.route('/elimina/<id>')
 @login_required
 def elimina(id):
-    utenti_collection.delete_one({'_id': ObjectId(id)})
+    bottiglie_collection.delete_one({'_id': ObjectId(id)})
     return redirect(url_for('magazzino'))
 
 @app.route('/login', methods=['GET', 'POST'])

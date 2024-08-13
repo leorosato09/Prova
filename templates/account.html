@@ -1,21 +1,16 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestione Account</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <h2>Gestione Account</h2>
-    <form method="post">
-        <label for="username">Nuovo Username:</label>
-        <input type="text" id="username" name="username" value="{{ current_user.username }}">
-        <br>
-        <label for="password">Nuova Password:</label>
-        <input type="password" id="password" name="password">
-        <br>
-        <input type="submit" value="Aggiorna">
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Gestione Account{% endblock %}
+
+{% block content %}
+<h2>Gestione Account</h2>
+<form method="post">
+    <label for="username">Nuovo Username:</label>
+    <input type="text" id="username" name="username" value="{{ current_user.username }}">
+    <br>
+    <label for="password">Nuova Password:</label>
+    <input type="password" id="password" name="password">
+    <br>
+    <input type="submit" value="Aggiorna">
+</form>
+{% endblock %}
