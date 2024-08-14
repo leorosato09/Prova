@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="account-container">
+    <h2>Il Mio Account</h2>
+    <form method="POST">
+        <label for="username">Nuovo Username</label>
+        <input type="text" id="username" name="username" value="{{ current_user.username }}">
+
+        <label for="password">Nuova Password</label>
+        <input type="password" id="password" name="password">
+
+        <button type="submit">Aggiorna</button>
+    </form>
+</div>
+{% endblock %}
