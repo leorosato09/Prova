@@ -3,6 +3,18 @@
 {% block content %}
 <div class="register-container">
     <h2>Registrati</h2>
+
+    <!-- Sezione per visualizzare i messaggi flash -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
     <form method="POST">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>

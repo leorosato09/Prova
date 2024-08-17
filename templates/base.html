@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProgettoDB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <ul class="navbar">
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropbtn">Magazzino</a>
+                <ul class="dropdown-content">
+                    <li><a href="{{ url_for('configurazione') }}">Configurazione</a></li>
+                    <li><a href="{{ url_for('gestione_magazzino') }}">Gestione Magazzino</a></li>
+                </ul>
+            </li>
+            <li><a href="{{ url_for('account') }}">Account</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <header>
+            {% if current_user.is_authenticated and request.endpoint == 'dashboard' %}
+            <div class="welcome-message" id="welcome-message">
+                <h1>Benvenuti nel gestionale di Enoteca Morbin</h1>
+            </div>
+            {% endif %}
+        </header>
+
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <!-- Inserisci il tuo script JavaScript qui -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var dropdownButtons = document.querySelectorAll('.sidebar .navbar li.dropdown > a');
+            
+            dropdownButtons.forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Previene il comportamento di default del link
+                    var parentLi = this.parentElement;
+                    var dropdownContent = parentLi.querySelector('.dropdown-content');
+
+                    // Chiudi tutti i sottomenu
+                    document.querySelectorAll('.sidebar .navbar li.dropdown').forEach(function(li) {
+                        if (li !== parentLi) {
+                            li.classList.remove('active');
+                            li.querySelector('.dropdown-content').style.display = 'none';
+                        }
+                    });
+
+                    // Alterna la visualizzazione del sottomenu cliccato
+                    if (parentLi.classList.contains('active')) {
+                        parentLi.classList.remove('active');
+                        dropdownContent.style.display = 'none';
+                    } else {
+                        parentLi.classList.add('active');
+                        dropdownContent.style.display = 'block';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

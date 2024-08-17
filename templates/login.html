@@ -2,16 +2,20 @@
 
 {% block content %}
 <div class="login-container">
-    <h2>Login</h2>
-    <form method="POST">
-        <label for="username">Username</label>
+    <h2>Accedi</h2>
+    <form method="POST" action="{{ url_for('login') }}">
+        <label for="username">Nome Utente</label>
         <input type="text" id="username" name="username" required>
-        
+
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
 
         <button type="submit">Accedi</button>
     </form>
-    <p>Non hai un account? <a href="{{ url_for('register') }}">Registrati qui</a></p>
+    <p>Non hai un account? <a href="{{ url_for('register') }}">Registrati</a></p>
 </div>
+{% endblock %}
+
+<!-- Sovrascrivere il blocco per i flash messages per non mostrarli -->
+{% block flash_messages %}
 {% endblock %}

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="gestione-magazzino-container">
+    <h2>Gestione Magazzino</h2>
+
+    <!-- Sezione per l'ordinamento delle bottiglie -->
+    <div class="ordinamento-container" style="margin-bottom: 20px;">
+        <form method="GET" action="{{ url_for('gestione_magazzino') }}">
+            <label for="sort_by">Ordina per</label>
+            <select id="sort_by" name="sort_by">
+                <option value="costo_desc" {% if request.args.get('sort_by') == 'costo_desc' %}selected{% endif %}>Costo (Decrescente)</option>
+                <option value="costo_asc" {% if request.args.get('sort_by') == 'costo_asc' %}selected{% endif %}>Costo (Crescente)</option>
+                <option value="quantita_desc" {% if request.args.get('sort_by') == 'quantita_desc' %}selected{% endif %}>Quantità (Decrescente)</option>
+                <option value="quantita_asc" {% if request.args.get('sort_by') == 'quantita_asc' %}selected{% endif %}>Quantità (Crescente)</option>
+                <option value="prezzo_base_desc" {% if request.args.get('sort_by') == 'prezzo_base_desc' %}selected{% endif %}>Prezzo Base (Decrescente)</option>
+                <option value="prezzo_base_asc" {% if request.args.get('sort_by') == 'prezzo_base_asc' %}selected{% endif %}>Prezzo Base (Crescente)</option>
+            </select>
+
+            <!-- Menù a discesa per decidere quante bottiglie visualizzare per pagina -->
+            <label for="items_per_page">Bottiglie per Pagina</label>
+            <select id="items_per_page" name="items_per_page">
+                <option value="10" {% if request.args.get('items_per_page') == '10' %}selected{% endif %}>10</option>
+                <option value="20" {% if request.args.get('items_per_page') == '20' %}selected{% endif %}>20</option>
+                <option value="30" {% if request.args.get('items_per_page') == '30' %}selected{% endif %}>30</option>
+                <option value="50" {% if request.args.get('items_per_page') == '50' %}selected{% endif %}>50</option>
+            </select>
+
+            <button type="submit">Applica Ordinamento</button>
+        </form>
+    </div>
+
+    <!-- Bottone per mostrare/nascondere il form di ricerca -->
+    <button type="button" onclick="toggleRicerca()">Ricerca Avanzata</button>
+
+    <!-- Form per cercare bottiglie -->
+    <div id="ricerca-container" style="display:none; margin-top: 20px;">
+        <form method="GET" action="{{ url_for('gestione_magazzino') }}">
+            <label for="search_descrizione">Descrizione</label>
+            <input type="text" id="search_descrizione" name="search_descrizione" value="{{ request.args.get('search_descrizione', '') }}">
+
+            <label for="search_prezzo_base">Prezzo Base (€)</label>
+            <input type="number" id="search_prezzo_base" name="search_prezzo_base" step="0.01" value="{{ request.args.get('search_prezzo_base', '') }}">
+
+            <label for="search_quantita">Quantità</label>
+            <input type="number" id="search_quantita" name="search_quantita" value="{{ request.args.get('search_quantita', '') }}">
+
+            <label for="search_collocazione_1">Collocazione 1</label>
+            <select id="search_collocazione_1" name="search_collocazione_1" onchange="updateSearchCollocazione2()">
+                <option value="" {% if request.args.get('search_collocazione_1') == '' %}selected{% endif %}>Tutte</option>
+                <option value="Sala Principale" {% if request.args.get('search_collocazione_1') == 'Sala Principale' %}selected{% endif %}>Sala Principale</option>
+                <option value="Sala Secondaria" {% if request.args.get('search_collocazione_1') == 'Sala Secondaria' %}selected{% endif %}>Sala Secondaria</option>
+                <option value="Soppalco" {% if request.args.get('search_collocazione_1') == 'Soppalco' %}selected{% endif %}>Soppalco</option>
+            </select>
+
+            <label for="search_collocazione_2">Collocazione 2</label>
+            <select id="search_collocazione_2" name="search_collocazione_2" data-selected="{{ request.args.get('search_collocazione_2', '') }}">
+                <option value="" {% if request.args.get('search_collocazione_2') == '' %}selected{% endif %}>Tutte</option>
+                {% if request.args.get('search_collocazione_1') == 'Sala Principale' %}
+                    <option value="Frigo" {% if request.args.get('search_collocazione_2') == 'Frigo' %}selected{% endif %}>Frigo</option>
+                    <option value="Scaffali" {% if request.args.get('search_collocazione_2') == 'Scaffali' %}selected{% endif %}>Scaffali</option>
+                {% elif request.args.get('search_collocazione_1') in ['Sala Secondaria', 'Soppalco'] %}
+                    <option value="Scaffali" {% if request.args.get('search_collocazione_2') == 'Scaffali' %}selected{% endif %}>Scaffali</option>
+                {% endif %}
+            </select>
+
+            <label for="search_categoria">Categoria</label>
+            <select id="search_categoria" name="search_categoria">
+                <option value="" {% if request.args.get('search_categoria') == '' %}selected{% endif %}>Tutte</option>
+                <option value="Analcolico" {% if request.args.get('search_categoria') == 'Analcolico' %}selected{% endif %}>Analcolico</option>
+                <option value="Birra" {% if request.args.get('search_categoria') == 'Birra' %}selected{% endif %}>Birra</option>
+                <option value="Food | Dolce" {% if request.args.get('search_categoria') == 'Food | Dolce' %}selected{% endif %}>Food | Dolce</option>
+                <option value="Food | Salato" {% if request.args.get('search_categoria') == 'Food | Salato' %}selected{% endif %}>Food | Salato</option>
+                <option value="Olio" {% if request.args.get('search_categoria') == 'Olio' %}selected{% endif %}>Olio</option>
+                <option value="Sparkling" {% if request.args.get('search_categoria') == 'Sparkling' %}selected{% endif %}>Sparkling</option>
+                <option value="Spirit" {% if request.args.get('search_categoria') == 'Spirit' %}selected{% endif %}>Spirit</option>
+                <option value="Tabella" {% if request.args.get('search_categoria') == 'Tabella' %}selected{% endif %}>Tabella</option>
+                <option value="Vino Bianco" {% if request.args.get('search_categoria') == 'Vino Bianco' %}selected{% endif %}>Vino Bianco</option>
+                <option value="Vino Dolce" {% if request.args.get('search_categoria') == 'Vino Dolce' %}selected{% endif %}>Vino Dolce</option>
+                <option value="Vino Rosato" {% if request.args.get('search_categoria') == 'Vino Rosato' %}selected{% endif %}>Vino Rosato</option>
+                <option value="Vino Rosso" {% if request.args.get('search_categoria') == 'Vino Rosso' %}selected{% endif %}>Vino Rosso</option>
+            </select>
+
+            <label for="search_codice_a_barre">Codice a Barre</label>
+            <input type="text" id="search_codice_a_barre" name="search_codice_a_barre" value="{{ request.args.get('search_codice_a_barre', '') }}">
+
+            <label for="search_id_interno">ID Interno</label>
+            <input type="text" id="search_id_interno" name="search_id_interno" value="{{ request.args.get('search_id_interno', '') }}">
+
+            <label for="search_costo">Costo (€)</label>
+            <input type="number" id="search_costo" name="search_costo" step="0.01" value="{{ request.args.get('search_costo', '') }}">
+
+            <label for="search_costo_comparator">Costo Maggiore/Minore di</label>
+            <select id="search_costo_comparator" name="search_costo_comparator">
+                <option value="maggiore" {% if request.args.get('search_costo_comparator') == 'maggiore' %}selected{% endif %}>Maggiore di</option>
+                <option value="minore" {% if request.args.get('search_costo_comparator') == 'minore' %}selected{% endif %}>Minore di</option>
+            </select>
+
+            <button type="submit">Applica Filtro</button>
+        </form>
+    </div>
+
+    <!-- Form per gestire le azioni di massa -->
+    <form id="mass-action-form" method="POST" action="{{ url_for('elimina_massiva_gestione_magazzino') }}">
+        <!-- Mostra la lista delle bottiglie trovate come tabella -->
+        <div class="bottiglie-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all"></th>
+                        <th>Descrizione</th>
+                        <th>Prezzo Base (€)</th>
+                        <th>Quantità Totale</th>
+                        <th>Costo (€)</th>
+                        <th>Collocazioni</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bottiglia in bottiglie_info %}
+                    <tr>
+                        <td><input type="checkbox" name="bottiglia_ids" value="{{ bottiglia._id }}"></td>
+                        <td>{{ bottiglia.descrizione }}</td>
+                        <td>{{ bottiglia.prezzo_base }}€</td>
+                        <td>{{ bottiglia.quantita_totale }}</td>
+                        <td>{{ bottiglia.costo }}€</td>
+                        <td>
+                            <ul>
+                                {% for collocazione in bottiglia.collocazioni %}
+                                <li>{{ collocazione.collocazione_1 }} / {{ collocazione.collocazione_2 }}: {{ collocazione.quantita }} bottiglie</li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('modifica_gestione_magazzino', id=bottiglia._id) }}">Modifica Quantità e Collocazioni</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pulsante per l'eliminazione di massa -->
+            <button type="submit" class="mass-action-button" onclick="return confirm('Sei sicuro di voler eliminare le bottiglie selezionate?')">Elimina Selezionati</button>
+        </div>
+    </form>
+
+    <!-- Paginazione -->
+    <div class="pagination">
+        {% if current_page > 1 %}
+        <a href="{{ url_for('gestione_magazzino', page=current_page-1, sort_by=request.args.get('sort_by'), items_per_page=request.args.get('items_per_page')) }}">&laquo; Pagina Precedente</a>
+        {% endif %}
+        <span>Pagina {{ current_page }} di {{ total_pages }}</span>
+        {% if current_page < total_pages %}
+        <a href="{{ url_for('gestione_magazzino', page=current_page+1, sort_by=request.args.get('sort_by'), items_per_page=request.args.get('items_per_page')) }}">Pagina Successiva &raquo;</a>
+        {% endif %}
+    </div>
+
+    <!-- Mostra il valore totale del magazzino -->
+    <div class="valore-magazzino">
+        <h3>Valore Totale del Magazzino: {{ valore_magazzino }}€</h3>
+    </div>
+</div>
+
+<script>
+    function toggleRicerca() {
+        var ricercaContainer = document.getElementById('ricerca-container');
+        if (ricercaContainer.style.display === 'none') {
+            ricercaContainer.style.display = 'block';
+        } else {
+            ricercaContainer.style.display = 'none';
+        }
+    }
+
+    // Seleziona/Deseleziona tutti i checkbox
+    document.getElementById('select-all').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('input[name="bottiglia_ids"]');
+        checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+    });
+
+    // (JavaScript per la gestione delle collocazioni rimane invariato)
+</script>
+{% endblock %}
