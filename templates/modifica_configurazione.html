@@ -1,47 +1,51 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="modifica-container">
-    <h2>Modifica Bottiglia</h2>
+<div class="configurazione-container">
+    <h2>Modifica Prodotto</h2>
+    
+    <form method="POST" action="{{ url_for('modifica_configurazione', id=bottiglia._id) }}" class="form-grid">
+        <div class="form-group">
+            <label for="descrizione">Descrizione</label>
+            <input type="text" id="descrizione" name="descrizione" value="{{ bottiglia.descrizione }}" required>
+        </div>
 
-    <form method="POST" action="{{ url_for('modifica_configurazione', id=bottiglia._id) }}">
-        <label for="descrizione">Descrizione</label>
-        <input type="text" id="descrizione" name="descrizione" value="{{ bottiglia.descrizione }}" required>
+        <div class="form-group">
+            <label for="prezzo_base">Prezzo Base (€)</label>
+            <input type="number" id="prezzo_base" name="prezzo_base" step="0.01" value="{{ bottiglia.prezzo_base }}" required>
+        </div>
 
-        <label for="prezzo_base">Prezzo Base (€)</label>
-        <input type="number" id="prezzo_base" name="prezzo_base" step="0.01" value="{{ bottiglia.prezzo_base }}" required>
+        <div class="form-group">
+            <label for="costo">Costo (€)</label>
+            <input type="number" id="costo" name="costo" step="0.01" value="{{ bottiglia.costo }}" required>
+        </div>
 
-        <label for="costo">Costo (€)</label>
-        <input type="number" id="costo" name="costo" step="0.01" value="{{ bottiglia.costo }}" required>
+        <div class="form-group">
+            <label for="categoria">Categoria</label>
+            <select id="categoria" name="categoria" required>
+                <option value="">Seleziona una categoria</option>
+                {% for categoria in categorie %}
+                <option value="{{ categoria.nome }}" {% if categoria.nome == bottiglia.categoria %}selected{% endif %}>{{ categoria.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label for="categoria">Categoria</label>
-        <select id="categoria" name="categoria">
-            <option value="Analcolico" {% if bottiglia.categoria == 'Analcolico' %}selected{% endif %}>Analcolico</option>
-            <option value="Birra" {% if bottiglia.categoria == 'Birra' %}selected{% endif %}>Birra</option>
-            <option value="Food | Dolce" {% if bottiglia.categoria == 'Food | Dolce' %}selected{% endif %}>Food | Dolce</option>
-            <option value="Food | Salato" {% if bottiglia.categoria == 'Food | Salato' %}selected{% endif %}>Food | Salato</option>
-            <option value="Olio" {% if bottiglia.categoria == 'Olio' %}selected{% endif %}>Olio</option>
-            <option value="Sparkling" {% if bottiglia.categoria == 'Sparkling' %}selected{% endif %}>Sparkling</option>
-            <option value="Spirit" {% if bottiglia.categoria == 'Spirit' %}selected{% endif %}>Spirit</option>
-            <option value="Tabella" {% if bottiglia.categoria == 'Tabella' %}selected{% endif %}>Tabella</option>
-            <option value="Vino Bianco" {% if bottiglia.categoria == 'Vino Bianco' %}selected{% endif %}>Vino Bianco</option>
-            <option value="Vino Dolce" {% if bottiglia.categoria == 'Vino Dolce' %}selected{% endif %}>Vino Dolce</option>
-            <option value="Vino Rosato" {% if bottiglia.categoria == 'Vino Rosato' %}selected{% endif %}>Vino Rosato</option>
-            <option value="Vino Rosso" {% if bottiglia.categoria == 'Vino Rosso' %}selected{% endif %}>Vino Rosso</option>
-        </select>
+        <div class="form-group">
+            <label for="codice_a_barre">Codice a Barre</label>
+            <input type="text" id="codice_a_barre" name="codice_a_barre" value="{{ bottiglia.codice_a_barre }}">
+        </div>
 
-        <label for="codice_a_barre">Codice a Barre</label>
-        <input type="text" id="codice_a_barre" name="codice_a_barre" value="{{ bottiglia.codice_a_barre }}">
+        <div class="form-group">
+            <label for="id_interno">ID Interno</label>
+            <input type="text" id="id_interno" name="id_interno" value="{{ bottiglia.id_interno }}">
+        </div>
 
-        <label for="id_interno">ID Interno</label>
-        <input type="text" id="id_interno" name="id_interno" value="{{ bottiglia.id_interno }}">
-
-        <!-- Gestione delle collocazioni e quantità -->
         <div id="collocazioni-container">
             {% for collocazione in bottiglia.collocazioni %}
             <div class="collocazione-item">
                 <label for="collocazione_1_{{ loop.index }}">Collocazione 1</label>
                 <select id="collocazione_1_{{ loop.index }}" name="collocazione_1">
+                    <option value="">Seleziona una collocazione</option>
                     <option value="Sala Principale" {% if collocazione.collocazione_1 == 'Sala Principale' %}selected{% endif %}>Sala Principale</option>
                     <option value="Sala Secondaria" {% if collocazione.collocazione_1 == 'Sala Secondaria' %}selected{% endif %}>Sala Secondaria</option>
                     <option value="Soppalco" {% if collocazione.collocazione_1 == 'Soppalco' %}selected{% endif %}>Soppalco</option>
@@ -49,12 +53,9 @@
 
                 <label for="collocazione_2_{{ loop.index }}">Collocazione 2</label>
                 <select id="collocazione_2_{{ loop.index }}" name="collocazione_2">
-                    {% if collocazione.collocazione_1 == 'Sala Principale' %}
-                        <option value="Frigo" {% if collocazione.collocazione_2 == 'Frigo' %}selected{% endif %}>Frigo</option>
-                        <option value="Scaffali" {% if collocazione.collocazione_2 == 'Scaffali' %}selected{% endif %}>Scaffali</option>
-                    {% elif collocazione.collocazione_1 in ['Sala Secondaria', 'Soppalco'] %}
-                        <option value="Scaffali" {% if collocazione.collocazione_2 == 'Scaffali' %}selected{% endif %}>Scaffali</option>
-                    {% endif %}
+                    <option value="">Seleziona una collocazione</option>
+                    <option value="Frigo" {% if collocazione.collocazione_2 == 'Frigo' %}selected{% endif %}>Frigo</option>
+                    <option value="Scaffali" {% if collocazione.collocazione_2 == 'Scaffali' %}selected{% endif %}>Scaffali</option>
                 </select>
 
                 <label for="quantita_{{ loop.index }}">Quantità</label>
@@ -63,23 +64,27 @@
             {% endfor %}
         </div>
 
-        <button type="button" onclick="aggiungiCollocazione()">Aggiungi Collocazione</button>
-        <button type="submit">Salva Modifiche</button>
+        <div class="form-group full-width">
+            <button type="button" onclick="aggiungiCollocazione()">Aggiungi Collocazione</button>
+        </div>
+        
+        <div class="form-group full-width">
+            <button type="submit">Salva Modifiche</button>
+        </div>
     </form>
 </div>
 
 <script>
-    // Funzione per aggiungere una nuova collocazione
     function aggiungiCollocazione() {
         const container = document.getElementById('collocazioni-container');
-        const newIndex = container.children.length + 1; // Calcola l'indice per il nuovo elemento
+        const newIndex = container.children.length + 1;
 
         const newCollocazione = document.createElement('div');
         newCollocazione.classList.add('collocazione-item');
 
         newCollocazione.innerHTML = `
             <label for="collocazione_1_${newIndex}">Collocazione 1</label>
-            <select id="collocazione_1_${newIndex}" name="collocazione_1" onchange="updateCollocazione2(this)">
+            <select id="collocazione_1_${newIndex}" name="collocazione_1_${newIndex}" onchange="updateCollocazione2(this)">
                 <option value="">Seleziona una collocazione</option>
                 <option value="Sala Principale">Sala Principale</option>
                 <option value="Sala Secondaria">Sala Secondaria</option>
@@ -87,26 +92,23 @@
             </select>
 
             <label for="collocazione_2_${newIndex}">Collocazione 2</label>
-            <select id="collocazione_2_${newIndex}" name="collocazione_2">
+            <select id="collocazione_2_${newIndex}" name="collocazione_2_${newIndex}">
                 <option value="">Seleziona una collocazione</option>
             </select>
 
             <label for="quantita_${newIndex}">Quantità</label>
-            <input type="number" id="quantita_${newIndex}" name="quantita" min="1" required>
+            <input type="number" id="quantita_${newIndex}" name="quantita_${newIndex}" min="1" required>
         `;
 
         container.appendChild(newCollocazione);
     }
 
-    // Funzione per aggiornare le opzioni di Collocazione 2 in base alla selezione di Collocazione 1
     function updateCollocazione2(selectElement) {
-        var collocazione1 = selectElement.value;
-        var collocazione2 = selectElement.closest('.collocazione-item').querySelector('select[name="collocazione_2"]');
+        const collocazione1 = selectElement.value;
+        const collocazione2 = selectElement.closest('.collocazione-item').querySelector('select[name^="collocazione_2"]');
 
-        // Resetta le opzioni di "Collocazione 2"
-        collocazione2.innerHTML = '';
+        collocazione2.innerHTML = ''; // Resetta le opzioni
 
-        // Aggiungi opzioni basate sulla selezione di "Collocazione 1"
         if (collocazione1 === 'Sala Principale') {
             collocazione2.add(new Option('Frigo', 'Frigo'));
             collocazione2.add(new Option('Scaffali', 'Scaffali'));
@@ -115,9 +117,9 @@
         }
     }
 
-    // Assegna l'evento onchange a tutte le select di collocazione_1 esistenti
-    document.querySelectorAll('select[name="collocazione_1"]').forEach(function(selectElement) {
-        selectElement.addEventListener('change', function() {
+    // Inizializza le collocazioni 2 esistenti all'avvio della pagina
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('select[name^="collocazione_1"]').forEach(function(selectElement) {
             updateCollocazione2(selectElement);
         });
     });

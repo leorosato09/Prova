@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="attributi-container">
+    <h1>Gestione Attributi</h1>
+
+    <!-- Form per aggiungere un nuovo attributo -->
+    <form action="{{ url_for('attributi') }}" method="POST">
+        <label for="nome_attributo">Nome Attributo:</label>
+        <input type="text" id="nome_attributo" name="nome_attributo" required>
+        
+        <label for="valore_attributo">Valore:</label>
+        <input type="text" id="valore_attributo" name="valore_attributo">
+
+        <button type="submit">Aggiungi Attributo</button>
+    </form>
+
+    <!-- Lista degli attributi esistenti -->
+    <h2>Attributi esistenti</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Valore</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for attributo in attributi %}
+            <tr>
+                <td>{{ attributo.nome_attributo }}</td>
+                <td>{{ attributo.valore_attributo }}</td>
+                <td>
+                    <a href="{{ url_for('modifica_attributo', id=attributo._id) }}">Modifica</a> |
+                    <a href="{{ url_for('elimina_attributo', id=attributo._id) }}" onclick="return confirm('Sei sicuro di voler eliminare questo attributo?')">Elimina</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

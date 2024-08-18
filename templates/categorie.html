@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="categorie-container">
+    <h2>Gestione Categorie</h2>
+
+    <!-- Form per aggiungere una nuova categoria -->
+    <form action="{{ url_for('categorie') }}" method="POST">
+        <label for="nome_categoria">Nome Categoria:</label>
+        <input type="text" id="nome_categoria" name="nome_categoria" required>
+        <button type="submit">Aggiungi Categoria</button>
+    </form>
+
+    <!-- Lista delle categorie esistenti -->
+    <h3>Categorie esistenti</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome Categoria</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for categoria in categorie %}
+            <tr>
+                <td>{{ categoria.nome }}</td>
+                <td>
+                    <a href="{{ url_for('modifica_categoria', id=categoria._id) }}">Modifica</a>
+                    <a href="{{ url_for('elimina_categoria', id=categoria._id) }}" onclick="return confirm('Sei sicuro di voler eliminare questa categoria?')">Elimina</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

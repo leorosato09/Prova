@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="reparti-container">
+    <h1>Gestione Reparti</h1>
+
+    <!-- Form per aggiungere un nuovo reparto -->
+    <form action="{{ url_for('reparti') }}" method="POST">
+        <label for="nome_reparto">Nome Reparto:</label>
+        <input type="text" id="nome_reparto" name="nome_reparto" required>
+
+        <label for="valore_reparto">Valore (%):</label>
+        <input type="number" id="valore_reparto" name="valore_reparto" step="0.01">
+
+        <button type="submit">Aggiungi Reparto</button>
+    </form>
+
+    <!-- Lista dei reparti esistenti -->
+    <h2>Reparti esistenti</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Valore (%)</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reparto in reparti %}
+            <tr>
+                <td>{{ reparto.nome }}</td>
+                <td>{{ reparto.valore }}</td>
+                <td>
+                    <a href="{{ url_for('modifica_reparto', id=reparto._id) }}">Modifica</a> |
+                    <a href="{{ url_for('elimina_reparto', id=reparto._id) }}" onclick="return confirm('Sei sicuro di voler eliminare questo reparto?')">Elimina</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -22,6 +22,9 @@ login_manager.login_view = 'login'
 # Definizione delle collezioni
 users_collection = mongo.db.users
 bottiglie_collection = mongo.db.bottiglie
+reparti_collection = mongo.db.reparti
+categorie_collection = mongo.db.categorie
+attributi_collection = mongo.db.attributi
 
 # Modello utente
 class User(UserMixin):
@@ -48,7 +51,7 @@ class User(UserMixin):
 def load_user(user_id):
     return User.get_by_id(user_id)
 
-# Funzione di login
+# Rotte di autenticazione
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -65,7 +68,6 @@ def login():
     
     return render_template('login.html')
 
-# Funzione di registrazione
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -85,94 +87,18 @@ def register():
             return redirect(url_for('dashboard'))
     return render_template('register.html')
 
-# Dashboard protetta
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+# Dashboard
 @app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('dashboard.html')
 
-# Funzione per gestire l'inserimento nel magazzino (Configurazione)
-@app.route('/configurazione', methods=['GET', 'POST'])
-@login_required
-def configurazione():
-    if request.method == 'POST':
-        if 'descrizione' in request.form and 'prezzo_base' in request.form and 'costo' in request.form and 'collocazione_1' in request.form:
-            descrizione = request.form['descrizione']
-            prezzo_base = request.form.get('prezzo_base', 0.0)
-            costo = float(request.form.get('costo', 0.0))
-            categoria = request.form.get('categoria', '')
-            codice_a_barre = request.form.get('codice_a_barre', '')
-            id_interno = request.form.get('id_interno', '')
-
-            collocazioni = []
-            quantita_totale = 0
-
-            collocazione_1_list = request.form.getlist('collocazione_1')
-            collocazione_2_list = request.form.getlist('collocazione_2')
-            quantita_list = request.form.getlist('quantita')
-
-            for collocazione_1, collocazione_2, quantita in zip(collocazione_1_list, collocazione_2_list, quantita_list):
-                if collocazione_1 and collocazione_2 and quantita:
-                    collocazioni.append({
-                        'collocazione_1': collocazione_1,
-                        'collocazione_2': collocazione_2,
-                        'quantita': int(quantita)
-                    })
-                    quantita_totale += int(quantita)
-
-            if descrizione and prezzo_base and costo and collocazioni:
-                bottiglie_collection.insert_one({
-                    'descrizione': descrizione,
-                    'categoria': categoria,
-                    'id_interno': id_interno,
-                    'codice_a_barre': codice_a_barre,
-                    'prezzo_base': prezzo_base,
-                    'costo': costo,
-                    'collocazioni': collocazioni,
-                    'quantita_totale': quantita_totale
-                })
-                flash('Bottiglia registrata con successo!')
-            else:
-                flash('Compila tutti i campi necessari per l\'inserimento!')
-
-    # Parametri di ordinamento e paginazione
-    sort_by = request.args.get('sort_by', 'descrizione')
-    sort_options = {
-        'costo_desc': ('costo', -1),
-        'costo_asc': ('costo', 1),
-        'quantita_desc': ('quantita_totale', -1),
-        'quantita_asc': ('quantita_totale', 1),
-        'prezzo_base_desc': ('prezzo_base', -1),
-        'prezzo_base_asc': ('prezzo_base', 1)
-    }
-    sort_field, sort_direction = sort_options.get(sort_by, ('descrizione', 1))
-
-    # Parametri per la paginazione
-    items_per_page = int(request.args.get('items_per_page', 10))
-    current_page = int(request.args.get('page', 1))
-
-    # Calcola l'offset per la paginazione
-    skip_items = (current_page - 1) * items_per_page
-
-    # Recupera tutte le bottiglie ordinate e paginazione
-    total_bottiglie = bottiglie_collection.count_documents({})
-    bottiglie_data = list(bottiglie_collection.find()
-                          .sort(sort_field, sort_direction)
-                          .skip(skip_items)
-                          .limit(items_per_page))
-
-    total_pages = (total_bottiglie + items_per_page - 1) // items_per_page  # Calcolo del numero di pagine
-
-    return render_template('configurazione.html', 
-                           bottiglie_info=bottiglie_data, 
-                           current_page=current_page, 
-                           total_pages=total_pages,
-                           items_per_page=items_per_page,
-                           sort_by=sort_by)
-
-
-
-# Funzione per gestire la ricerca nel magazzino (Gestione Magazzino)
 @app.route('/gestione_magazzino', methods=['GET'])
 @login_required
 def gestione_magazzino():
@@ -229,7 +155,7 @@ def gestione_magazzino():
 
     # Recupera il numero totale di bottiglie e calcola il numero di pagine
     total_bottiglie = bottiglie_collection.count_documents(query)
-    total_pages = (total_bottiglie + items_per_page - 1) // items_per_page  # Calcola il numero di pagine
+    total_pages = (total_bottiglie + items_per_page - 1) // items_per_page
 
     # Recupera le bottiglie con l'ordinamento e la paginazione
     bottiglie_data = list(
@@ -249,7 +175,8 @@ def gestione_magazzino():
         current_page=current_page,
         total_pages=total_pages
     )
-# Funzione per modificare un elemento del magazzino
+
+# Modifica e eliminazione delle bottiglie
 @app.route('/configurazione/modifica/<id>', methods=['GET', 'POST'])
 @login_required
 def modifica_configurazione(id):
@@ -294,7 +221,14 @@ def modifica_configurazione(id):
         return redirect(url_for('configurazione'))
 
     bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
-    return render_template('modifica_configurazione.html', bottiglia=bottiglia)
+    categorie = list(categorie_collection.find().sort("nome", 1))  # Recupera le categorie dal database
+    return render_template('modifica_configurazione.html', bottiglia=bottiglia, categorie=categorie)
+
+@app.route('/configurazione')
+@login_required
+def configurazione():
+    # Logica per visualizzare la configurazione (ad esempio, liste di categorie, reparti, ecc.)
+    return render_template('prodotti.html')  # Assumendo che esista un template configurazione.html
 
 @app.route('/configurazione/elimina/<id>')
 @login_required
@@ -309,9 +243,9 @@ def modifica_gestione_magazzino(id):
         # Gestione delle collocazioni e quantità
         collocazioni = []
         quantita_totale = 0
-        collocazione_1_list = request.form.getlist('collocazione_1')
-        collocazione_2_list = request.form.getlist('collocazione_2')
-        quantita_list = request.form.getlist('quantita')
+        collocazione_1_list = request.form.getlist('collocazione_1[]')
+        collocazione_2_list = request.form.getlist('collocazione_2[]')
+        quantita_list = request.form.getlist('quantita[]')
 
         for collocazione_1, collocazione_2, quantita in zip(collocazione_1_list, collocazione_2_list, quantita_list):
             if collocazione_1 and collocazione_2 and quantita:
@@ -333,17 +267,196 @@ def modifica_gestione_magazzino(id):
         return redirect(url_for('gestione_magazzino'))
 
     bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
-    return render_template('modifica_gestione_magazzino.html', bottiglia=bottiglia)
+    categorie = list(categorie_collection.find().sort("nome", 1))
+    return render_template('modifica_gestione_magazzino.html', bottiglia=bottiglia, categorie=categorie)
 
-
-# Funzione di logout
-@app.route('/logout')
+# Funzioni di eliminazione massiva
+@app.route('/configurazione/elimina_massiva', methods=['POST'])
 @login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
+def elimina_massiva_configurazione():
+    bottiglia_ids = request.form.getlist('bottiglia_ids')
+    for bottiglia_id in bottiglia_ids:
+        bottiglie_collection.delete_one({'_id': ObjectId(bottiglia_id)})
+    flash(f'{len(bottiglia_ids)} bottiglie eliminate con successo.')
+    return redirect(url_for('configurazione'))
 
-# Funzione per gestire l'account utente
+@app.route('/gestione_magazzino/elimina_massiva', methods=['POST'])
+@login_required
+def elimina_massiva_gestione_magazzino():
+    bottiglia_ids = request.form.getlist('bottiglia_ids')
+    for bottiglia_id in bottiglia_ids:
+        bottiglie_collection.delete_one({'_id': ObjectId(bottiglia_id)})
+    flash(f'{len(bottiglia_ids)} bottiglie eliminate con successo.')
+    return redirect(url_for('gestione_magazzino'))
+
+# Gestione dei prodotti
+@app.route('/prodotti', methods=['GET', 'POST'])
+@login_required
+def crea_prodotto():
+    if request.method == 'POST':
+        descrizione = request.form['descrizione']
+        categoria = request.form['categoria']
+        prezzo_base = float(request.form['prezzo_base'])
+        costo = float(request.form['costo'])
+        codice_a_barre = request.form.get('codice_a_barre', '')
+        id_interno = request.form.get('id_interno', '')
+        quantita = int(request.form['quantita'])
+        collocazione_1 = request.form.getlist('collocazione_1[]')
+        collocazione_2 = request.form.getlist('collocazione_2[]')
+
+        collocazioni = []
+        for c1, c2 in zip(collocazione_1, collocazione_2):
+            collocazioni.append({
+                'collocazione_1': c1,
+                'collocazione_2': c2,
+                'quantita': quantita  # Modifica questa parte se ogni collocazione ha una quantità diversa
+            })
+
+        nuovo_prodotto = {
+            'descrizione': descrizione,
+            'categoria': categoria,
+            'prezzo_base': prezzo_base,
+            'costo': costo,
+            'codice_a_barre': codice_a_barre,
+            'id_interno': id_interno,
+            'quantita_totale': quantita,
+            'collocazioni': collocazioni
+        }
+
+        bottiglie_collection.insert_one(nuovo_prodotto)
+        flash('Prodotto aggiunto con successo!')
+
+    # Recupera le categorie dal database
+    categorie = list(categorie_collection.find().sort("nome", 1))
+    bottiglie_info = list(bottiglie_collection.find().sort("descrizione", 1))
+
+    return render_template('prodotti.html', categorie=categorie, bottiglie_info=bottiglie_info)
+
+# Gestione dei reparti
+@app.route('/reparti', methods=['GET', 'POST'])
+@login_required
+def reparti():
+    if request.method == 'POST':
+        nome_reparto = request.form['nome_reparto']
+        valore_reparto = request.form.get('valore_reparto', '0')  # Imposta a '0' se il campo è vuoto
+        
+        # Aggiungi il nuovo reparto al database
+        nuovo_reparto = {
+            'nome': nome_reparto,
+            'valore': float(valore_reparto) if valore_reparto else 0.0  # Converti in float o imposta a 0.0
+        }
+        reparti_collection.insert_one(nuovo_reparto)
+        flash('Reparto aggiunto con successo!')
+    
+    # Recupera tutti i reparti dal database
+    reparti = list(reparti_collection.find())
+    return render_template('reparti.html', reparti=reparti)
+
+# Gestione delle categorie
+@app.route('/categorie', methods=['GET', 'POST'])
+@login_required
+def categorie():
+    if request.method == 'POST':
+        nome_categoria = request.form['nome_categoria']
+
+        # Aggiungi la nuova categoria al database
+        nuova_categoria = {'nome': nome_categoria}
+        categorie_collection.insert_one(nuova_categoria)
+        flash('Categoria aggiunta con successo!')
+
+    # Recupera tutte le categorie dal database
+    categorie = list(categorie_collection.find())
+    return render_template('categorie.html', categorie=categorie)
+
+@app.route('/categorie/elimina/<id>', methods=['POST', 'GET'])
+def elimina_categoria(id):
+    try:
+        categorie_collection.delete_one({'_id': ObjectId(id)})
+        flash('Categoria eliminata con successo!', 'success')
+    except Exception as e:
+        flash('Errore nell\'eliminazione della categoria.', 'error')
+    return redirect(url_for('categorie'))
+
+# Gestione degli attributi
+@app.route('/attributi', methods=['GET', 'POST'])
+@login_required
+def attributi():
+    if request.method == 'POST':
+        nome_attributo = request.form['nome_attributo']
+        valore_attributo = request.form.get('valore_attributo', '')
+
+        # Aggiungi il nuovo attributo al database
+        nuovo_attributo = {
+            'nome_attributo': nome_attributo,
+            'valore_attributo': valore_attributo
+        }
+
+        # Inserisci l'attributo nel database
+        attributi_collection.insert_one(nuovo_attributo)
+        flash('Attributo aggiunto con successo!')
+
+    # Recupera tutti gli attributi per visualizzarli
+    attributi = list(attributi_collection.find())
+
+    return render_template('attributi.html', attributi=attributi)
+
+@app.route('/reparti/modifica/<id>', methods=['GET', 'POST'])
+@login_required
+def modifica_reparto(id):
+    reparto = reparti_collection.find_one({'_id': ObjectId(id)})
+    
+    if not reparto:
+        flash("Reparto non trovato.", "error")
+        return redirect(url_for('reparti'))
+    
+    if request.method == 'POST':
+        nuovo_nome = request.form['nome_reparto']
+        nuovo_valore = request.form.get('valore_reparto', 0.0)
+        reparti_collection.update_one(
+            {'_id': ObjectId(id)},
+            {'$set': {'nome': nuovo_nome, 'valore': float(nuovo_valore)}}
+        )
+        flash('Reparto modificato con successo!', "success")
+        return redirect(url_for('reparti'))
+    
+    return render_template('modifica_reparto.html', reparto=reparto)
+
+@app.route('/reparti/elimina/<id>', methods=['POST'])
+@login_required
+def elimina_reparto(id):
+    reparti_collection.delete_one({'_id': ObjectId(id)})
+    flash('Reparto eliminato con successo!', "success")
+    return redirect(url_for('reparti'))
+
+@app.route('/attributi/modifica/<id>', methods=['GET', 'POST'])
+@login_required
+def modifica_attributo(id):
+    attributo = attributi_collection.find_one({'_id': ObjectId(id)})
+    
+    if not attributo:
+        flash("Attributo non trovato.", "error")
+        return redirect(url_for('attributi'))
+    
+    if request.method == 'POST':
+        nuovo_nome = request.form['nome_attributo']
+        nuovo_valore = request.form['valore_attributo']
+        attributi_collection.update_one(
+            {'_id': ObjectId(id)},
+            {'$set': {'nome_attributo': nuovo_nome, 'valore_attributo': nuovo_valore}}
+        )
+        flash('Attributo modificato con successo!', "success")
+        return redirect(url_for('attributi'))
+    
+    return render_template('modifica_attributo.html', attributo=attributo)
+
+@app.route('/attributi/elimina/<id>', methods=['POST'])
+@login_required
+def elimina_attributo(id):
+    attributi_collection.delete_one({'_id': ObjectId(id)})
+    flash('Attributo eliminato con successo!', "success")
+    return redirect(url_for('attributi'))
+
+
 @app.route('/account', methods=['GET', 'POST'])
 @login_required
 def account():
@@ -371,31 +484,29 @@ def account():
             login_user(user)
     return render_template('account.html')
 
-@app.route('/configurazione/elimina_massiva', methods=['POST'])
+@app.route('/categorie/modifica/<id>', methods=['GET', 'POST'])
 @login_required
-def elimina_massiva_configurazione():
-    # Ottieni gli ID delle bottiglie selezionate dal form
-    bottiglia_ids = request.form.getlist('bottiglia_ids')
+def modifica_categoria(id):
+    categoria = categorie_collection.find_one({'_id': ObjectId(id)})
+    
+    if not categoria:
+        flash("Categoria non trovata.", "error")
+        return redirect(url_for('categorie'))
+    
+    if request.method == 'POST':
+        nuovo_nome = request.form['nome_categoria']
+        if nuovo_nome:
+            categorie_collection.update_one(
+                {'_id': ObjectId(id)},
+                {'$set': {'nome': nuovo_nome}}
+            )
+            flash('Categoria modificata con successo!', "success")
+        else:
+            flash('Il nome della categoria non può essere vuoto.', "error")
+        return redirect(url_for('categorie'))
+    
+    return render_template('modifica_categoria.html', categoria=categoria)
 
-    # Elimina le bottiglie selezionate
-    for bottiglia_id in bottiglia_ids:
-        bottiglie_collection.delete_one({'_id': ObjectId(bottiglia_id)})
-
-    flash(f'{len(bottiglia_ids)} bottiglie eliminate con successo.')
-    return redirect(url_for('configurazione'))
-
-@app.route('/gestione_magazzino/elimina_massiva', methods=['POST'])
-@login_required
-def elimina_massiva_gestione_magazzino():
-    # Ottieni gli ID delle bottiglie selezionate dal form
-    bottiglia_ids = request.form.getlist('bottiglia_ids')
-
-    # Elimina le bottiglie selezionate
-    for bottiglia_id in bottiglia_ids:
-        bottiglie_collection.delete_one({'_id': ObjectId(bottiglia_id)})
-
-    flash(f'{len(bottiglia_ids)} bottiglie eliminate con successo.')
-    return redirect(url_for('gestione_magazzino'))
 
 if __name__ == "__main__":
     app.run(debug=True)

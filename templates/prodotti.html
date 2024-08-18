@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="configurazione-container">
+    <h2>Prodotti</h2>
+    
+    <!-- Sezione per l'ordinamento delle bottiglie -->
+    <div class="ordinamento-container" style="margin-bottom: 20px;">
+        <form method="GET" action="{{ url_for('crea_prodotto') }}">
+            <label for="sort_by">Ordina per</label>
+            <select id="sort_by" name="sort_by">
+                <option value="costo_desc" {% if request.args.get('sort_by') == 'costo_desc' %}selected{% endif %}>Costo (Decrescente)</option>
+                <option value="costo_asc" {% if request.args.get('sort_by') == 'costo_asc' %}selected{% endif %}>Costo (Crescente)</option>
+                <option value="quantita_desc" {% if request.args.get('sort_by') == 'quantita_desc' %}selected{% endif %}>Quantità (Decrescente)</option>
+                <option value="quantita_asc" {% if request.args.get('sort_by') == 'quantita_asc' %}selected{% endif %}>Quantità (Crescente)</option>
+                <option value="prezzo_base_desc" {% if request.args.get('sort_by') == 'prezzo_base_desc' %}selected{% endif %}>Prezzo Base (Decrescente)</option>
+                <option value="prezzo_base_asc" {% if request.args.get('sort_by') == 'prezzo_base_asc' %}selected{% endif %}>Prezzo Base (Crescente)</option>
+            </select>
+
+            <label for="items_per_page">Bottiglie per Pagina</label>
+            <select id="items_per_page" name="items_per_page">
+                <option value="10" {% if request.args.get('items_per_page') == '10' %}selected{% endif %}>10</option>
+                <option value="20" {% if request.args.get('items_per_page') == '20' %}selected{% endif %}>20</option>
+                <option value="30" {% if request.args.get('items_per_page') == '30' %}selected{% endif %}>30</option>
+                <option value="50" {% if request.args.get('items_per_page') == '50' %}selected{% endif %}>50</option>
+            </select>
+
+            <button type="submit">Applica Ordinamento</button>
+        </form>
+    </div>
+
+    <!-- Bottone per mostrare/nascondere il form di inserimento -->
+    <button type="button" onclick="toggleInserimento()">Aggiungi Nuova Bottiglia</button>
+
+    <!-- Form per inserire una nuova bottiglia nel magazzino -->
+    <div id="inserimento-container" style="display:none; margin-top: 20px;">
+        <form method="POST" action="{{ url_for('crea_prodotto') }}" class="form-grid">
+            <div class="form-group">
+                <label for="descrizione">Descrizione</label>
+                <input type="text" id="descrizione" name="descrizione" required>
+            </div>
+
+            <div class="form-group">
+                <label for="prezzo_base">Prezzo Base (€)</label>
+                <input type="number" id="prezzo_base" name="prezzo_base" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="costo">Costo (€)</label>
+                <input type="number" id="costo" name="costo" step="0.01" required>
+            </div>
+
+            <div class="form-group">
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria" required>
+                    <option value="">Seleziona una categoria</option>
+                    {% for categoria in categorie %}
+                    <option value="{{ categoria.nome }}">{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="codice_a_barre">Codice a Barre</label>
+                <input type="text" id="codice_a_barre" name="codice_a_barre">
+            </div>
+
+            <div class="form-group">
+                <label for="id_interno">ID Interno</label>
+                <input type="text" id="id_interno" name="id_interno">
+            </div>
+
+            <div class="form-group">
+                <label for="quantita">Quantità</label>
+                <input type="number" id="quantita" name="quantita" min="1" required>
+            </div>
+
+            <!-- Contenitore delle collocazioni -->
+            <div id="collocazioni-container">
+                <div class="collocazione-item">
+                    <label for="collocazione_1">Collocazione 1</label>
+                    <select id="collocazione_1" name="collocazione_1[]" onchange="updateCollocazione2(this)">
+                        <option value="">Seleziona una collocazione</option>
+                        <option value="Sala Principale">Sala Principale</option>
+                        <option value="Sala Secondaria">Sala Secondaria</option>
+                        <option value="Soppalco">Soppalco</option>
+                    </select>
+
+                    <label for="collocazione_2">Collocazione 2</label>
+                    <select id="collocazione_2" name="collocazione_2[]">
+                        <option value="">Seleziona una collocazione</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <button type="button" onclick="aggiungiCollocazione()">Aggiungi Collocazione</button>
+            </div>
+            <div class="form-group full-width">
+                <button type="submit">Aggiungi Bottiglia</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista delle bottiglie già inserite -->
+    <div class="bottiglie-list">
+        <h3>Bottiglie Registrate</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Descrizione</th>
+                    <th>Categoria</th>
+                    <th>Prezzo Base (€)</th>
+                    <th>Costo (€)</th>
+                    <th>Quantità Totale</th>
+                    <th>Collocazioni</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bottiglia in bottiglie_info %}
+                <tr>
+                    <td><input type="checkbox" name="bottiglia_ids" value="{{ bottiglia._id }}"></td>
+                    <td>{{ bottiglia.descrizione }}</td>
+                    <td>{{ bottiglia.categoria }}</td>
+                    <td>{{ bottiglia.prezzo_base }}€</td>
+                    <td>{{ bottiglia.costo }}€</td>
+                    <td>{{ bottiglia.quantita_totale }}</td>
+                    <td>
+                        <ul>
+                            {% for collocazione in bottiglia.collocazioni %}
+                            <li>{{ collocazione.collocazione_1 }} / {{ collocazione.collocazione_2 }}: {{ collocazione.quantita }} bottiglie</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('modifica_configurazione', id=bottiglia._id) }}">Modifica</a>
+                        <a href="{{ url_for('elimina_configurazione', id=bottiglia._id) }}" onclick="return confirm('Sei sicuro di voler eliminare questa bottiglia?')">Elimina</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+// Funzione per mostrare o nascondere il modulo di inserimento
+function toggleInserimento() {
+    var inserimentoContainer = document.getElementById('inserimento-container');
+    if (inserimentoContainer.style.display === 'none' || inserimentoContainer.style.display === '') {
+        inserimentoContainer.style.display = 'block';
+    } else {
+        inserimentoContainer.style.display = 'none';
+    }
+}
+
+// Funzione per aggiornare le opzioni di "Collocazione 2" in base alla selezione di "Collocazione 1"
+function updateCollocazione2(selectElement) {
+    var collocazione1 = selectElement.value;
+    var collocazione2 = selectElement.closest('.collocazione-item').querySelector('select[name="collocazione_2[]"]');
+
+    collocazione2.innerHTML = ''; // Pulisce le opzioni esistenti
+
+    if (collocazione1 === 'Sala Principale') {
+        collocazione2.add(new Option('Frigo', 'Frigo'));
+        collocazione2.add(new Option('Scaffali', 'Scaffali'));
+    } else if (collocazione1 === 'Sala Secondaria' || collocazione1 === 'Soppalco') {
+        collocazione2.add(new Option('Scaffali', 'Scaffali'));
+    }
+}
+
+// Funzione per aggiungere una nuova collocazione
+function aggiungiCollocazione() {
+    const container = document.getElementById('collocazioni-container');
+    const newIndex = container.children.length + 1;
+
+    const newCollocazione = document.createElement('div');
+    newCollocazione.classList.add('collocazione-item');
+
+    newCollocazione.innerHTML = `
+        <label for="collocazione_1_${newIndex}">Collocazione 1</label>
+        <select id="collocazione_1_${newIndex}" name="collocazione_1[]" onchange="updateCollocazione2(this)">
+            <option value="">Seleziona una collocazione</option>
+            <option value="Sala Principale">Sala Principale</option>
+            <option value="Sala Secondaria">Sala Secondaria</option>
+            <option value="Soppalco">Soppalco</option>
+        </select>
+
+        <label for="collocazione_2_${newIndex}">Collocazione 2</label>
+        <select id="collocazione_2_${newIndex}" name="collocazione_2[]">
+            <option value="">Seleziona una collocazione</option>
+        </select>
+    `;
+
+    container.appendChild(newCollocazione);
+}
+
+// Aggiunge un gestore di eventi a tutti i selettori di "Collocazione 1" esistenti
+document.querySelectorAll('select[name="collocazione_1[]"]').forEach(function(selectElement) {
+    selectElement.addEventListener('change', function() {
+        updateCollocazione2(selectElement);
+    });
+});
+
+// Inizializza le collocazioni 2 esistenti all'avvio della pagina
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('select[name="collocazione_1[]"]').forEach(function(selectElement) {
+        updateCollocazione2(selectElement);
+    });
+});
+
+</script>
+{% endblock %}

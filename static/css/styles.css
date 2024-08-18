@@ -10,28 +10,28 @@ body {
 }
 
 header {
-    background-color: #4a90e2;
-    color: white;
+    background-color: #fff;
+    color: #333;
     padding: 15px 0;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: fixed;
-    width: calc(100% - 200px); /* Larghezza sottratta dalla larghezza della sidebar */
-    left: 200px; /* Sposta il contenuto per adattarlo alla sidebar */
+    width: calc(100% - 240px); /* Larghezza sottratta dalla larghezza della sidebar */
+    left: 240px; /* Sposta il contenuto per adattarlo alla sidebar */
     top: 0;
     z-index: 1000;
 }
 
 /* Sidebar */
 .sidebar {
-    width: 200px;
+    width: 240px; /* Larghezza della sidebar */
     background-color: #4a90e2;
     height: 100vh; /* 100% of the viewport height */
     position: fixed;
     top: 0;
     left: 0;
     padding-top: 20px;
-    display: block; /* Mostra la sidebar */
+    overflow-y: auto; /* Aggiunta di overflow per una migliore usabilità */
 }
 
 .sidebar .navbar {
@@ -42,7 +42,7 @@ header {
 
 .sidebar .navbar li {
     padding: 10px 15px;
-    border-bottom: 1px solid #fff; /* Linea bianca di separazione */
+    border-bottom: 1px solid #ffffff; /* Linea bianca di separazione */
     position: relative; /* Posizionamento relativo per aggiungere la freccia */
 }
 
@@ -51,7 +51,7 @@ header {
     color: white;
     text-decoration: none;
     transition: background-color 0.3s;
-    border-radius: 4px;
+    border-radius: 6px;
     padding-left: 25px; /* Spazio per la freccia */
 }
 
@@ -60,65 +60,71 @@ header {
 }
 
 /* Freccia a destra delle schede con sottoschede */
-.sidebar .navbar li.dropdown:before {
+.sidebar .navbar li.dropdown > a:before,
+.sidebar .navbar li ul.dropdown-content li.dropdown > a:before {
     content: "";
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-top: 6px solid white;
     position: absolute;
-    right: 10px; /* Freccia a destra */
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
 }
 
-/* Stili per le schede secondarie */
-.sidebar .navbar ul.dropdown {
+/* Nascondi le schede secondarie */
+.sidebar .navbar ul.dropdown-content {
     display: none;
     list-style-type: none;
     padding: 0;
     margin: 0;
     background-color: #fff;
-    position: absolute;
-    left: 100%; /* Posiziona il dropdown a destra del menu principale */
-    top: 0;
-    width: 200px; /* Larghezza del menu a discesa */
-    z-index: 1000;
+    border-left: 1px solid #ccc; /* Linea di separazione tra le sottoschede */
 }
 
-.sidebar .navbar ul.dropdown li a {
+.sidebar .navbar ul.dropdown-content li {
+    border-bottom: 1px solid #000000; /* Linea nera di separazione per le sottoschede */
+}
+
+.sidebar .navbar ul.dropdown-content li a {
     color: #333;
     padding: 10px 15px;
     background-color: #fff;
-    display: block;
 }
 
-.sidebar .navbar ul.dropdown li a:hover {
+.sidebar .navbar ul.dropdown-content li a:hover {
     background-color: #e0e0e0;
 }
 
 /* Mostra le schede secondarie quando la classe "active" è aggiunta */
-.sidebar .navbar li.active ul.dropdown {
+.sidebar .navbar li.active ul.dropdown-content {
     display: block;
+}
+
+/* Sottoschede grigie */
+.sidebar .navbar ul.dropdown-content ul.dropdown-subcontent-list {
+    display: none;
+    background-color: #d3d3d3;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar .navbar ul.dropdown-content ul.dropdown-subcontent-list li {
+    border-bottom: 1px solid #000;
+    padding-left: 25px; /* Allineamento con la freccia */
+}
+
+.sidebar .navbar ul.dropdown-content ul.dropdown-subcontent-list li a {
+    color: #333;
+    background-color: #d3d3d3;
 }
 
 /* Stile del contenuto principale */
 .main-content {
-    margin-left: 200px; /* Stessa larghezza della sidebar */
+    margin-left: 240px; /* Stessa larghezza della sidebar */
     padding: 20px;
-    width: calc(100% - 200px); /* Regola la larghezza secondo la sidebar */
+    width: calc(100% - 240px); /* Regola la larghezza secondo la sidebar */
     margin-top: 60px; /* Altezza dell'header */
-}
-
-/* Stili per la sezione di benvenuto */
-.welcome-message {
-    padding: 30px;
-    text-align: center;
-    background-color: #ffffff; /* Sfondo bianco */
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin: 20px;
-    color: #4a4a4a;
-    border: none; /* Rimuove la linea trasparente */
 }
 
 /* Stili per i form di login */
@@ -137,7 +143,6 @@ header {
     margin-bottom: 20px;
     font-size: 26px;
     color: #555;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .login-container form {
@@ -334,7 +339,7 @@ table ul li {
     margin: 0 5px;
     padding: 8px 16px;
     text-decoration: none;
-    background-color: #ffffff;
+    background-color: #4a90e2;
     color: white;
     border-radius: 8px;
     transition: background-color 0.3s, box-shadow 0.3s;
@@ -353,12 +358,46 @@ table ul li {
     font-weight: bold;
 }
 
-/* Nascondi il messaggio di benvenuto quando si scorre */
-#welcome-message {
-    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+/* Stato attivo della scheda e sottoscheda */
+.sidebar .navbar li.active > a,
+.sidebar .navbar ul.dropdown-content li.active > a {
+    background-color: #357ab8;
+    color: white;
 }
 
-#welcome-message.hidden {
-    opacity: 0;
-    transform: translateY(-50px);
+/* Stato attivo per le sottoschede */
+.sidebar .navbar ul.dropdown-content li.active ul.dropdown-subcontent-list {
+    display: block;
+}
+
+/* Griglia del form */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Due colonne uguali */
+    gap: 20px; /* Spaziatura tra le colonne */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Form a larghezza completa */
+.form-group.full-width {
+    grid-column: 1 / -1; /* Occupa tutta la larghezza della griglia */
+}
+
+/* Ottimizzazioni per schermi più piccoli */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr; /* Una colonna su schermi piccoli */
+    }
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+    header {
+        width: 100%;
+        left: 0;
+    }
 }

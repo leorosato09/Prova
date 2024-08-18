@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="categorie-container">
+    <h1>Modifica Categoria</h1>
+    
+    <form action="{{ url_for('modifica_categoria', id=categoria._id) }}" method="POST">
+        <label for="nome_categoria">Nome Categoria:</label>
+        <input type="text" id="nome_categoria" name="nome_categoria" value="{{ categoria.nome }}" required>
+        <button type="submit">Salva Modifiche</button>
+    </form>
+</div>
+{% endblock %}
