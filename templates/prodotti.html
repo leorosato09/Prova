@@ -1,142 +1,34 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="configurazione-container">
-    <h2>Prodotti</h2>
-    
-    <!-- Sezione per l'ordinamento delle bottiglie -->
-    <div class="ordinamento-container" style="margin-bottom: 20px;">
-        <form method="GET" action="{{ url_for('crea_prodotto') }}">
-            <label for="sort_by">Ordina per</label>
-            <select id="sort_by" name="sort_by">
-                <option value="costo_desc" {% if request.args.get('sort_by') == 'costo_desc' %}selected{% endif %}>Costo (Decrescente)</option>
-                <option value="costo_asc" {% if request.args.get('sort_by') == 'costo_asc' %}selected{% endif %}>Costo (Crescente)</option>
-                <option value="quantita_desc" {% if request.args.get('sort_by') == 'quantita_desc' %}selected{% endif %}>Quantità (Decrescente)</option>
-                <option value="quantita_asc" {% if request.args.get('sort_by') == 'quantita_asc' %}selected{% endif %}>Quantità (Crescente)</option>
-                <option value="prezzo_base_desc" {% if request.args.get('sort_by') == 'prezzo_base_desc' %}selected{% endif %}>Prezzo Base (Decrescente)</option>
-                <option value="prezzo_base_asc" {% if request.args.get('sort_by') == 'prezzo_base_asc' %}selected{% endif %}>Prezzo Base (Crescente)</option>
-            </select>
+<div class="container mt-5">
+    <h1 class="mb-4">Gestione Prodotti</h1>
 
-            <label for="items_per_page">Bottiglie per Pagina</label>
-            <select id="items_per_page" name="items_per_page">
-                <option value="10" {% if request.args.get('items_per_page') == '10' %}selected{% endif %}>10</option>
-                <option value="20" {% if request.args.get('items_per_page') == '20' %}selected{% endif %}>20</option>
-                <option value="30" {% if request.args.get('items_per_page') == '30' %}selected{% endif %}>30</option>
-                <option value="50" {% if request.args.get('items_per_page') == '50' %}selected{% endif %}>50</option>
-            </select>
-
-            <button type="submit">Applica Ordinamento</button>
-        </form>
-    </div>
-
-    <!-- Bottone per mostrare/nascondere il form di inserimento -->
-    <button type="button" onclick="toggleInserimento()">Aggiungi Nuova Bottiglia</button>
-
-    <!-- Form per inserire una nuova bottiglia nel magazzino -->
-    <div id="inserimento-container" style="display:none; margin-top: 20px;">
-        <form method="POST" action="{{ url_for('crea_prodotto') }}" class="form-grid">
-            <div class="form-group">
-                <label for="descrizione">Descrizione</label>
-                <input type="text" id="descrizione" name="descrizione" required>
-            </div>
-
-            <div class="form-group">
-                <label for="prezzo_base">Prezzo Base (€)</label>
-                <input type="number" id="prezzo_base" name="prezzo_base" step="0.01" required>
-            </div>
-
-            <div class="form-group">
-                <label for="costo">Costo (€)</label>
-                <input type="number" id="costo" name="costo" step="0.01" required>
-            </div>
-
-            <div class="form-group">
-                <label for="categoria">Categoria</label>
-                <select id="categoria" name="categoria" required>
-                    <option value="">Seleziona una categoria</option>
-                    {% for categoria in categorie %}
-                    <option value="{{ categoria.nome }}">{{ categoria.nome }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="codice_a_barre">Codice a Barre</label>
-                <input type="text" id="codice_a_barre" name="codice_a_barre">
-            </div>
-
-            <div class="form-group">
-                <label for="id_interno">ID Interno</label>
-                <input type="text" id="id_interno" name="id_interno">
-            </div>
-
-            <div class="form-group">
-                <label for="quantita">Quantità</label>
-                <input type="number" id="quantita" name="quantita" min="1" required>
-            </div>
-
-            <!-- Contenitore delle collocazioni -->
-            <div id="collocazioni-container">
-                <div class="collocazione-item">
-                    <label for="collocazione_1">Collocazione 1</label>
-                    <select id="collocazione_1" name="collocazione_1[]" onchange="updateCollocazione2(this)">
-                        <option value="">Seleziona una collocazione</option>
-                        <option value="Sala Principale">Sala Principale</option>
-                        <option value="Sala Secondaria">Sala Secondaria</option>
-                        <option value="Soppalco">Soppalco</option>
-                    </select>
-
-                    <label for="collocazione_2">Collocazione 2</label>
-                    <select id="collocazione_2" name="collocazione_2[]">
-                        <option value="">Seleziona una collocazione</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group full-width">
-                <button type="button" onclick="aggiungiCollocazione()">Aggiungi Collocazione</button>
-            </div>
-            <div class="form-group full-width">
-                <button type="submit">Aggiungi Bottiglia</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Lista delle bottiglie già inserite -->
-    <div class="bottiglie-list">
-        <h3>Bottiglie Registrate</h3>
-        <table>
-            <thead>
+    <!-- Lista delle bottiglie esistenti -->
+    <div class="prodotti-list">
+        <h2>Bottiglie Esistenti</h2>
+        <table class="table table-striped table-bordered">
+            <thead class="thead-dark">
                 <tr>
-                    <th><input type="checkbox" id="select-all"></th>
                     <th>Descrizione</th>
-                    <th>Categoria</th>
                     <th>Prezzo Base (€)</th>
-                    <th>Costo (€)</th>
+                    <th>Categoria</th>
+                    <th>Reparto</th>
                     <th>Quantità Totale</th>
-                    <th>Collocazioni</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
             <tbody>
                 {% for bottiglia in bottiglie_info %}
                 <tr>
-                    <td><input type="checkbox" name="bottiglia_ids" value="{{ bottiglia._id }}"></td>
                     <td>{{ bottiglia.descrizione }}</td>
-                    <td>{{ bottiglia.categoria }}</td>
                     <td>{{ bottiglia.prezzo_base }}€</td>
-                    <td>{{ bottiglia.costo }}€</td>
+                    <td>{{ bottiglia.categoria }}</td>
+                    <td>{{ bottiglia.reparto }}</td>
                     <td>{{ bottiglia.quantita_totale }}</td>
                     <td>
-                        <ul>
-                            {% for collocazione in bottiglia.collocazioni %}
-                            <li>{{ collocazione.collocazione_1 }} / {{ collocazione.collocazione_2 }}: {{ collocazione.quantita }} bottiglie</li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>
-                        <a href="{{ url_for('modifica_configurazione', id=bottiglia._id) }}">Modifica</a>
-                        <a href="{{ url_for('elimina_configurazione', id=bottiglia._id) }}" onclick="return confirm('Sei sicuro di voler eliminare questa bottiglia?')">Elimina</a>
+                        <a href="{{ url_for('modifica_configurazione', id=bottiglia._id) }}" class="btn btn-sm btn-warning">Modifica</a>
+                        <a href="{{ url_for('elimina_configurazione', id=bottiglia._id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questo prodotto?')">Elimina</a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -144,73 +36,113 @@
         </table>
     </div>
 
+    <!-- Pulsante per aggiungere una nuova bottiglia -->
+    <button type="button" class="btn btn-primary mt-3" onclick="toggleForm()">Aggiungi Nuova Bottiglia</button>
+
+    <!-- Form per aggiungere una nuova bottiglia, inizialmente nascosto -->
+    <div id="nuova-bottiglia-form" class="mt-4" style="display: none;">
+        <h2>Aggiungi Nuova Bottiglia</h2>
+        <form method="POST" action="{{ url_for('crea_prodotto') }}">
+            <div class="form-group">
+                <label for="descrizione">Descrizione</label>
+                <input type="text" id="descrizione" name="descrizione" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="prezzo_base">Prezzo Base (€)</label>
+                <input type="number" step="0.01" id="prezzo_base" name="prezzo_base" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria" class="form-control" required>
+                    {% for categoria in categorie %}
+                    <option value="{{ categoria.nome }}">{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="reparto">Reparto</label>
+                <select id="reparto" name="reparto" class="form-control" required>
+                    {% for reparto in reparti %}
+                    <option value="{{ reparto.nome }}">{{ reparto.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="codice_a_barre">Codice a Barre</label>
+                <input type="text" id="codice_a_barre" name="codice_a_barre" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="id_interno">ID Interno</label>
+                <input type="text" id="id_interno" name="id_interno" class="form-control">
+            </div>
+
+            <div id="collocazioni-container">
+                <div class="collocazione-group">
+                    <div class="form-group">
+                        <label for="collocazione_1">Collocazione 1</label>
+                        <select id="collocazione_1" name="collocazione_1[]" class="form-control" onchange="updateCollocazione2(this)">
+                            <option value="Sala Principale">Sala Principale</option>
+                            <option value="Sala Secondaria">Sala Secondaria</option>
+                            <option value="Soppalco">Soppalco</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="collocazione_2">Collocazione 2</label>
+                        <select id="collocazione_2" name="collocazione_2[]" class="form-control">
+                            <!-- Opzioni aggiornate dinamicamente -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantita">Quantità</label>
+                        <input type="number" id="quantita" name="quantita[]" class="form-control" min="1">
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-secondary mt-2" onclick="addCollocazione()">Aggiungi Collocazione</button>
+
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-success">Salva Bottiglia</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
-// Funzione per mostrare o nascondere il modulo di inserimento
-function toggleInserimento() {
-    var inserimentoContainer = document.getElementById('inserimento-container');
-    if (inserimentoContainer.style.display === 'none' || inserimentoContainer.style.display === '') {
-        inserimentoContainer.style.display = 'block';
-    } else {
-        inserimentoContainer.style.display = 'none';
+    function toggleForm() {
+        const form = document.getElementById('nuova-bottiglia-form');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
     }
-}
 
-// Funzione per aggiornare le opzioni di "Collocazione 2" in base alla selezione di "Collocazione 1"
-function updateCollocazione2(selectElement) {
-    var collocazione1 = selectElement.value;
-    var collocazione2 = selectElement.closest('.collocazione-item').querySelector('select[name="collocazione_2[]"]');
+    function updateCollocazione2(selectElement) {
+        const collocazione1 = selectElement.value;
+        const collocazione2Select = selectElement.closest('.collocazione-group').querySelector('select[name="collocazione_2[]"]');
 
-    collocazione2.innerHTML = ''; // Pulisce le opzioni esistenti
-
-    if (collocazione1 === 'Sala Principale') {
-        collocazione2.add(new Option('Frigo', 'Frigo'));
-        collocazione2.add(new Option('Scaffali', 'Scaffali'));
-    } else if (collocazione1 === 'Sala Secondaria' || collocazione1 === 'Soppalco') {
-        collocazione2.add(new Option('Scaffali', 'Scaffali'));
+        let options = '';
+        if (collocazione1 === 'Sala Principale') {
+            options = '<option value="Scaffali">Scaffali</option><option value="Frighi">Frighi</option><option value="Frighetto">Frighetto</option>';
+        } else if (collocazione1 === 'Sala Secondaria') {
+            options = '<option value="Scaffali">Scaffali</option>';
+        } else if (collocazione1 === 'Soppalco') {
+            options = '<option value="Scaffali">Scaffali</option><option value="Chiuso">Chiuso</option>';
+        }
+        collocazione2Select.innerHTML = options;
     }
-}
 
-// Funzione per aggiungere una nuova collocazione
-function aggiungiCollocazione() {
-    const container = document.getElementById('collocazioni-container');
-    const newIndex = container.children.length + 1;
+    function addCollocazione() {
+        const container = document.getElementById('collocazioni-container');
+        const newCollocazione = container.firstElementChild.cloneNode(true);
 
-    const newCollocazione = document.createElement('div');
-    newCollocazione.classList.add('collocazione-item');
-
-    newCollocazione.innerHTML = `
-        <label for="collocazione_1_${newIndex}">Collocazione 1</label>
-        <select id="collocazione_1_${newIndex}" name="collocazione_1[]" onchange="updateCollocazione2(this)">
-            <option value="">Seleziona una collocazione</option>
-            <option value="Sala Principale">Sala Principale</option>
-            <option value="Sala Secondaria">Sala Secondaria</option>
-            <option value="Soppalco">Soppalco</option>
-        </select>
-
-        <label for="collocazione_2_${newIndex}">Collocazione 2</label>
-        <select id="collocazione_2_${newIndex}" name="collocazione_2[]">
-            <option value="">Seleziona una collocazione</option>
-        </select>
-    `;
-
-    container.appendChild(newCollocazione);
-}
-
-// Aggiunge un gestore di eventi a tutti i selettori di "Collocazione 1" esistenti
-document.querySelectorAll('select[name="collocazione_1[]"]').forEach(function(selectElement) {
-    selectElement.addEventListener('change', function() {
-        updateCollocazione2(selectElement);
-    });
-});
-
-// Inizializza le collocazioni 2 esistenti all'avvio della pagina
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('select[name="collocazione_1[]"]').forEach(function(selectElement) {
-        updateCollocazione2(selectElement);
-    });
-});
-
+        newCollocazione.querySelectorAll('input').forEach(input => input.value = '');
+        newCollocazione.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+        container.appendChild(newCollocazione);
+    }
 </script>
 {% endblock %}

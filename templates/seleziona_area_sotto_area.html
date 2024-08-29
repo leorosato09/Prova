@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="selezione-container">
+    <form method="POST" action="{{ url_for('ricerca_riquadri') }}">
+        <div class="form-group">
+            <label for="area">Seleziona Area:</label>
+            <select id="area" name="area" onchange="aggiornaSottoAree()" required>
+                <option value="" disabled selected>Seleziona un'area</option>
+                <option value="Sala Principale" {% if area == "Sala Principale" %}selected{% endif %}>Sala Principale</option>
+                <option value="Sala Secondaria" {% if area == "Sala Secondaria" %}selected{% endif %}>Sala Secondaria</option>
+                <option value="Soppalco" {% if area == "Soppalco" %}selected{% endif %}>Soppalco</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="sotto_area">Seleziona Sotto-Area:</label>
+            <select id="sotto_area" name="sotto_area" required>
+                <option value="" disabled selected>Seleziona una sotto-area</option>
+                <!-- Sotto-aree generate dinamicamente -->
+            </select>
+        </div>
+
+        <div id="riquadro-container" class="form-group" style="display: none;">
+            <label for="riquadro">Seleziona Riquadro:</label>
+            <select id="riquadro" name="riquadro">
+                <!-- Riquadri generati dinamicamente -->
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Visualizza Riquadri Disponibili</button>
+    </form>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="container mt-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<script>
+    function aggiornaSottoAree() {
+        var area = document.getElementById("area").value;
+        var sottoArea = document.getElementById("sotto_area");
+        var riquadroContainer = document.getElementById("riquadro-container");
+
+        sottoArea.innerHTML = '<option value="" disabled selected>Seleziona una sotto-area</option>';
+        riquadroContainer.style.display = 'none';
+
+        if (area === "Sala Principale") {
+            sottoArea.innerHTML += '<option value="Scaffali">Scaffali</option>';
+            sottoArea.innerHTML += '<option value="Frighi">Frighi</option>';
+            sottoArea.innerHTML += '<option value="Frighetto">Frighetto</option>';
+        } else if (area === "Sala Secondaria") {
+            sottoArea.innerHTML += '<option value="Scaffali">Scaffali</option>';
+        } else if (area === "Soppalco") {
+            sottoArea.innerHTML += '<option value="Scaffali">Scaffali</option>';
+            sottoArea.innerHTML += '<option value="Chiuso">Chiuso</option>';
+        }
+
+        sottoArea.addEventListener('change', function() {
+            riquadroContainer.style.display = 'none';
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        aggiornaSottoAree();
+        document.getElementById("area").addEventListener("change", aggiornaSottoAree);
+    });
+</script>
+{% endblock %}

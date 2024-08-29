@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Seleziona Area e Sotto-Area</h2>
+
+    <form method="POST" action="{{ url_for('visione_magazzino') }}">
+        <div class="form-group">
+            <label for="area">Seleziona Area</label>
+            <select id="area" name="area" required>
+                <option value="" disabled selected>Seleziona un'area</option>
+                <option value="Sala Principale" {% if area == "Sala Principale" %}selected{% endif %}>Sala Principale</option>
+                <option value="Sala Secondaria" {% if area == "Sala Secondaria" %}selected{% endif %}>Sala Secondaria</option>
+                <option value="Soppalco" {% if area == "Soppalco" %}selected{% endif %}>Soppalco</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sotto_area">Seleziona Sotto-Area</label>
+            <select id="sotto_area" name="sotto_area" required>
+                <option value="" disabled selected>Seleziona una sotto-area</option>
+            </select>
+        </div>
+        <button type="submit">Visualizza Riquadri</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('area').addEventListener('change', function() {
+        var area = this.value;
+        var sottoAreaSelect = document.getElementById('sotto_area');
+
+        // Pulisce le opzioni attuali
+        sottoAreaSelect.innerHTML = '<option value="" disabled selected>Seleziona una sotto-area</option>';
+
+        // Definisce le sotto-aree in base all'area selezionata
+        var sottoAree = {
+            "Sala Principale": ["Scaffali", "Frighi", "Frighetto"],
+            "Sala Secondaria": ["Scaffali"],
+            "Soppalco": ["Scaffali", "Chiuso"]
+        };
+
+        // Popola il menu a tendina delle sotto-aree in base all'area selezionata
+        if (sottoAree[area]) {
+            sottoAree[area].forEach(function(sottoArea) {
+                var option = document.createElement('option');
+                option.value = sottoArea;
+                option.textContent = sottoArea;
+                sottoAreaSelect.appendChild(option);
+            });
+        }
+    });
+
+    // Inizializza sotto_area se un'area è già selezionata
+    document.addEventListener('DOMContentLoaded', function() {
+        var areaElement = document.getElementById('area');
+        if (areaElement.value) {
+            var event = new Event('change');
+            areaElement.dispatchEvent(event);
+        }
+    });
+</script>
+
+{% endblock %}

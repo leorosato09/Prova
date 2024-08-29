@@ -31,6 +31,16 @@
         </div>
 
         <div class="form-group">
+            <label for="reparto">Reparto</label>
+            <select id="reparto" name="reparto" required>
+                <option value="">Seleziona un reparto</option>
+                {% for reparto in reparti %}
+                <option value="{{ reparto.nome }}" {% if bottiglia.reparto == reparto.nome %}selected{% endif %}>{{ reparto.nome }} | {{ reparto.valore }}%</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="codice_a_barre">Codice a Barre</label>
             <input type="text" id="codice_a_barre" name="codice_a_barre" value="{{ bottiglia.codice_a_barre }}">
         </div>

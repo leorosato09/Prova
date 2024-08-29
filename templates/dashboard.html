@@ -4,6 +4,12 @@
 <div class="dashboard-container">
     <h2>Dashboard</h2>
 
+    <!-- Sezione per la barra di ricerca -->
+    <div class="search-container">
+        <input type="text" id="search-bar" placeholder="Cerca bottiglia per descrizione o codice a barre" class="search-bar">
+        <div id="search-results" class="search-results"></div>
+    </div>
+
     <div class="charts-container">
         <div class="chart-item">
             <h3>Distribuzione delle Categorie di Vendita</h3>
@@ -71,6 +77,26 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+        document.getElementById('search-bar').addEventListener('input', function() {
+        let query = this.value;
+        if (query.length > 0) {
+            fetch(`/cerca_bottiglia_ajax?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                let resultsDiv = document.getElementById('search-results');
+                resultsDiv.innerHTML = '';
+                data.forEach(bottiglia => {
+                    let resultItem = document.createElement('div');
+                    resultItem.classList.add('result-item');
+                    resultItem.innerHTML = `<a href="/bottiglia/${bottiglia._id}">${bottiglia.descrizione}</a>`;
+                    resultsDiv.appendChild(resultItem);
+                });
+            });
+        } else {
+            document.getElementById('search-results').innerHTML = '';
+        }
+    });
+
     // Grafico a torta per la distribuzione delle categorie di vendita
     var ctx = document.getElementById('pieChart').getContext('2d');
     var pieChart = new Chart(ctx, {
@@ -150,4 +176,5 @@
         }
     });
 </script>
+
 {% endblock %}

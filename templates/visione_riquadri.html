@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Configurazione Magazzino</h2>
+
+    <!-- Form di selezione area e sotto-area visibile solo all'inizio -->
+    <form method="GET" action="{{ url_for('ricerca_riquadri') }}">
+        <div class="form-group">
+            <label for="area">Seleziona Area</label>
+            <select id="area" name="area" required>
+                <option value="Sala Principale" {% if area == "Sala Principale" %}selected{% endif %}>Sala Principale</option>
+                <option value="Sala Secondaria" {% if area == "Sala Secondaria" %}selected{% endif %}>Sala Secondaria</option>
+                <option value="Soppalco" {% if area == "Soppalco" %}selected{% endif %}>Soppalco</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sotto_area">Seleziona Sotto-Area</label>
+            <select id="sotto_area" name="sotto_area" required>
+                {% if area == "Sala Principale" %}
+                    <option value="Scaffali" {% if sotto_area == "Scaffali" %}selected{% endif %}>Scaffali</option>
+                    <option value="Frighi" {% if sotto_area == "Frighi" %}selected{% endif %}>Frighi</option>
+                    <option value="Frighetto" {% if sotto_area == "Frighetto" %}selected{% endif %}>Frighetto</option>
+                {% elif area == "Sala Secondaria" %}
+                    <option value="Scaffali" {% if sotto_area == "Scaffali" %}selected{% endif %}>Scaffali</option>
+                {% elif area == "Soppalco" %}
+                    <option value="Scaffali" {% if sotto_area == "Scaffali" %}selected{% endif %}>Scaffali</option>
+                    <option value="Chiuso" {% if sotto_area == "Chiuso" %}selected{% endif %}>Chiuso</option>
+                {% endif %}
+            </select>
+        </div>
+        <button type="submit">Seleziona</button>
+    </form>
+
+    <!-- Spazio tra la selezione e i riquadri -->
+    <hr>
+
+    <!-- Freccia per tornare alla selezione -->
+    <div class="back-to-selection">
+        <a href="{{ url_for('ricerca_riquadri') }}" class="btn btn-secondary">Torna alla selezione Area/Sotto-Area</a>
+    </div>
+
+    <!-- Selezione dei riquadri -->
+    <div class="riquadri-container">
+        {% if area == "Sala Principale" and sotto_area == "Scaffali" %}
+            {% for letter in ['A', 'B'] %}
+            <div class="letter-row">
+                <div class="letter-title">{{ letter }}</div>
+                <div class="riquadri-row">
+                    {% for number in range(1, 6) %}
+                    <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=letter ~ number) }}" class="grid-item">
+                        Configura {{ letter }}{{ number }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% for letter in ['C', 'D', 'E', 'F', 'G'] %}
+            <div class="letter-row">
+                <div class="letter-title">{{ letter }}</div>
+                <div class="riquadri-row">
+                    {% for number in range(1, 4) %}
+                    <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=letter ~ number) }}" class="grid-item">
+                        Configura {{ letter }}{{ number }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% for letter in ['H', 'I'] %}
+            <div class="letter-row">
+                <div class="letter-title">{{ letter }}</div>
+                <div class="riquadri-row">
+                    {% for number in range(1, 6) %}
+                    <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=letter ~ number) }}" class="grid-item">
+                        Configura {{ letter }}{{ number }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% elif area == "Sala Principale" and sotto_area == "Frighi" %}
+        <div class="frigo-row">
+            <div class="riquadro-unico">
+                <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro='Frigo Sx') }}" class="grid-item">
+                    Configura Frigo Sx
+                </a>
+            </div>
+            <div class="riquadro-unico">
+                <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro='Frigo Dx') }}" class="grid-item">
+                    Configura Frigo Dx
+                </a>
+            </div>
+        </div>
+        {% elif area == "Sala Principale" and sotto_area == "Frighetto" %}
+            <div class="riquadro-unico">
+                <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro='Unico') }}" class="grid-item">
+                    Configura Unico
+                </a>
+            </div>
+        {% elif area == "Sala Secondaria" and sotto_area == "Scaffali" %}
+            {% for letter in ['A', 'B'] %}
+            <div class="letter-row">
+                <div class="letter-title">{{ letter }}</div>
+                <div class="riquadri-row">
+                    {% for number in range(1, 6) %}
+                    <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=letter ~ number) }}" class="grid-item">
+                        Configura {{ letter }}{{ number }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% elif area == "Soppalco" and sotto_area == "Scaffali" %}
+            {% for letter in ['A', 'B', 'C', 'D'] %}
+            <div class="letter-row">
+                <div class="letter-title">{{ letter }}</div>
+                <div class="riquadri-row">
+                    <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=letter) }}" class="grid-item">
+                        Configura {{ letter }}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% elif area == "Soppalco" and sotto_area == "Chiuso" %}
+            <div class="riquadro-unico">
+                <a href="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro='Unico') }}" class="grid-item">
+                    Configura Unico
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

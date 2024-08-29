@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="modifica-attributo-container">
+    <h2>Modifica Attributo</h2>
+    <form method="POST" action="{{ url_for('modifica_attributo', id=attributo._id) }}">
+        <div class="form-group">
+            <label for="nome_attributo">Nome Attributo</label>
+            <input type="text" id="nome_attributo" name="nome_attributo" value="{{ attributo.nome_attributo }}" required>
+        </div>
+        <div class="form-group">
+            <label for="valore_attributo">Valore Attributo</label>
+            <input type="text" id="valore_attributo" name="valore_attributo" value="{{ attributo.valore_attributo }}" required>
+        </div>
+        <div class="form-group full-width">
+            <button type="submit">Salva</button>
+            <button type="button" onclick="window.location.href='{{ url_for('attributi') }}';">Annulla</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

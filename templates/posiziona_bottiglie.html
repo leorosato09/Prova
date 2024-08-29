@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}
+Configura Magazzino - Posizionamento Bottiglie
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Configura Magazzino - {{ area }} / {{ sotto_area }}</h1>
+
+    {% if bottiglie_non_posizionate %}
+    <div class="alert alert-info">
+        <h3>Bottiglie da Posizionare</h3>
+        <ul>
+            {% for bottiglia in bottiglie_non_posizionate %}
+            <li>
+                <strong>{{ bottiglia.descrizione }}</strong> - Quantità da posizionare: {{ bottiglia.quantita_non_posizionata }}
+                <form action="{{ url_for('posiziona_bottiglia_riquadro', area=area, sotto_area=sotto_area, bottiglia_id=bottiglia._id) }}" method="POST" class="form-inline mt-3">
+                    <label for="riquadro">Seleziona Riquadro:</label>
+                    <select name="riquadro" required>
+                        {% for riquadro in riquadri_disponibili %}
+                        <option value="{{ riquadro }}">{{ riquadro }}</option>
+                        {% endfor %}
+                    </select>
+                    <label for="quantita">Quantità:</label>
+                    <input type="number" name="quantita" min="1" max="{{ bottiglia.quantita_non_posizionata }}" required>
+                    <button type="submit" class="btn btn-primary">Posiziona</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        <p>Non ci sono bottiglie da posizionare. Puoi inserire nuove bottiglie nel riquadro selezionato.</p>
+    </div>
+    {% endif %}
+
+    <h2>Seleziona un Riquadro</h2>
+    <div class="riquadro-selection-container">
+        <div class="riquadro-list">
+            {% for riquadro in riquadri_disponibili %}
+            <div class="riquadro-item">
+                <a href="{{ url_for('inserisci_bottiglia_riquadro', area=area, sotto_area=sotto_area, riquadro=riquadro) }}">
+                    {{ riquadro }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

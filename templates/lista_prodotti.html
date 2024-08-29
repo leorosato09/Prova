@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Lista dei Prodotti</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Descrizione</th>
+                <th>Prezzo Base</th>
+                <th>Categoria</th>
+                <th>Reparto</th>
+                <th>Quantità Totale</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prodotto in prodotti %}
+            <tr>
+                <td>{{ prodotto.descrizione }}</td>
+                <td>{{ prodotto.prezzo_base }}€</td>
+                <td>{{ prodotto.categoria }}</td>
+                <td>{{ prodotto.reparto }}</td>
+                <td>{{ prodotto.quantita_totale }}</td>
+                <td>
+                    <a href="{{ url_for('modifica_prodotto', id=prodotto._id) }}" class="btn btn-warning">Modifica</a>
+                    <a href="{{ url_for('elimina_prodotto', id=prodotto._id) }}" class="btn btn-danger" onclick="return confirm('Sei sicuro di voler eliminare questo prodotto?')">Elimina</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('crea_prodotto') }}" class="btn btn-primary">Aggiungi Nuova Bottiglia</a>
+</div>
+{% endblock %}

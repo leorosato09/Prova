@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="elimina-attributo-container">
+    <h2>Elimina Attributo</h2>
+    <p>Sei sicuro di voler eliminare l'attributo "{{ attributo.nome_attributo }}"?</p>
+    <form method="POST" action="{{ url_for('elimina_attributo', id=attributo._id) }}">
+        <div class="form-group full-width">
+            <button type="submit">Sì, Elimina</button>
+            <button type="button" onclick="window.location.href='{{ url_for('attributi') }}';">Annulla</button>
+        </div>
+    </form>       
+</div>
+{% endblock %}

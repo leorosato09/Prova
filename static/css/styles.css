@@ -6,7 +6,6 @@ body {
     background-color: #f9f9f9;
     color: #333;
     line-height: 1.6;
-    display: flex;
 }
 
 header {
@@ -16,22 +15,22 @@ header {
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     position: fixed;
-    width: calc(100% - 240px); /* Larghezza sottratta dalla larghezza della sidebar */
-    left: 240px; /* Sposta il contenuto per adattarlo alla sidebar */
+    width: calc(100% - 240px);
+    left: 240px;
     top: 0;
     z-index: 1000;
 }
 
 /* Sidebar */
 .sidebar {
-    width: 240px; /* Larghezza della sidebar */
+    width: 240px;
     background-color: #4a90e2;
-    height: 100vh; /* 100% of the viewport height */
+    height: 100vh;
     position: fixed;
     top: 0;
     left: 0;
     padding-top: 20px;
-    overflow-y: auto; /* Aggiunta di overflow per una migliore usabilità */
+    overflow-y: auto;
 }
 
 .sidebar .navbar {
@@ -42,8 +41,8 @@ header {
 
 .sidebar .navbar li {
     padding: 10px 15px;
-    border-bottom: 1px solid #ffffff; /* Linea bianca di separazione */
-    position: relative; /* Posizionamento relativo per aggiungere la freccia */
+    border-bottom: 1px solid #ffffff;
+    position: relative;
 }
 
 .sidebar .navbar li a {
@@ -52,7 +51,7 @@ header {
     text-decoration: none;
     transition: background-color 0.3s;
     border-radius: 6px;
-    padding-left: 25px; /* Spazio per la freccia */
+    padding-left: 25px;
 }
 
 .sidebar .navbar li a:hover {
@@ -72,18 +71,18 @@ header {
     transform: translateY(-50%);
 }
 
-/* Nascondi le schede secondarie */
+/* Rendi visibili le sottoschede sempre */
 .sidebar .navbar ul.dropdown-content {
-    display: none;
+    display: block; /* Modifica da 'none' a 'block' */
     list-style-type: none;
     padding: 0;
     margin: 0;
     background-color: #fff;
-    border-left: 1px solid #ccc; /* Linea di separazione tra le sottoschede */
+    border-left: 1px solid #ccc;
 }
 
 .sidebar .navbar ul.dropdown-content li {
-    border-bottom: 1px solid #000000; /* Linea nera di separazione per le sottoschede */
+    border-bottom: 1px solid #000;
 }
 
 .sidebar .navbar ul.dropdown-content li a {
@@ -96,14 +95,9 @@ header {
     background-color: #e0e0e0;
 }
 
-/* Mostra le schede secondarie quando la classe "active" è aggiunta */
-.sidebar .navbar li.active ul.dropdown-content {
-    display: block;
-}
-
 /* Sottoschede grigie */
 .sidebar .navbar ul.dropdown-content ul.dropdown-subcontent-list {
-    display: none;
+    display: block; /* Modifica da 'none' a 'block' */
     background-color: #d3d3d3;
     padding: 0;
     margin: 0;
@@ -111,7 +105,7 @@ header {
 
 .sidebar .navbar ul.dropdown-content ul.dropdown-subcontent-list li {
     border-bottom: 1px solid #000;
-    padding-left: 25px; /* Allineamento con la freccia */
+    padding-left: 25px;
 }
 
 .sidebar .navbar ul.dropdown-content ul.dropdown-subcontent-list li a {
@@ -121,21 +115,22 @@ header {
 
 /* Stile del contenuto principale */
 .main-content {
-    margin-left: 240px; /* Stessa larghezza della sidebar */
+    margin-left: 240px;
     padding: 20px;
-    width: calc(100% - 240px); /* Regola la larghezza secondo la sidebar */
-    margin-top: 60px; /* Altezza dell'header */
+    width: calc(100% - 240px);
+    margin-top: 60px;
 }
 
 /* Stili per i form di login */
 .login-container {
     max-width: 400px;
-    margin: 100px auto;
+    width: 100%;
     padding: 30px;
     background-color: white;
     border: 1px solid #ddd;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .login-container h2 {
@@ -283,121 +278,587 @@ table ul li {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.charts-container {
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
+.dashboard-header {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
-.chart-item {
-    width: 45%;
-    margin: 20px 0;
+.dashboard-section {
+    margin-bottom: 30px;
 }
 
-.sales-list {
-    margin-top: 40px;
+.dashboard-section h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    font-weight: 500;
 }
 
-.sales-list table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 16px;
-    margin-top: 20px;
+.dashboard-section .section-content {
+    background-color: #f1f1f1;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.sales-list table th, .sales-list table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: left;
+/* Stile per la scheda di selezione riquadro */
+.riquadro-selection-container {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.sales-list table th {
-    background-color: #4a90e2;
-    color: #fff;
-    text-transform: uppercase;
-}
-
-.sales-list table tr:nth-child(even) {
-    background-color: #f7f7f7;
-}
-
-.sales-list table tr:nth-child(odd) {
-    background-color: #eaeaea;
-}
-
-.sales-list table tr:hover {
-    background-color: #d6d6d6;
-}
-
-/* Paginazione */
-.pagination {
-    margin-top: 20px;
+.riquadro-selection-container h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: #4a90e2;
     text-align: center;
 }
 
-.pagination a {
-    margin: 0 5px;
-    padding: 8px 16px;
-    text-decoration: none;
-    background-color: #4a90e2;
-    color: white;
-    border-radius: 8px;
-    transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-.pagination a:hover {
-    background-color: #357ab8;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.pagination span {
-    margin: 0 5px;
-    padding: 8px 16px;
-    background-color: #f4f4f4;
-    border-radius: 8px;
-    font-weight: bold;
-}
-
-/* Stato attivo della scheda e sottoscheda */
-.sidebar .navbar li.active > a,
-.sidebar .navbar ul.dropdown-content li.active > a {
-    background-color: #357ab8;
-    color: white;
-}
-
-/* Stato attivo per le sottoschede */
-.sidebar .navbar ul.dropdown-content li.active ul.dropdown-subcontent-list {
-    display: block;
-}
-
-/* Griglia del form */
-.form-grid {
+.riquadro-list {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Due colonne uguali */
-    gap: 20px; /* Spaziatura tra le colonne */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+    justify-items: center;
+}
+
+/* Righe di riquadri */
+.riquadro-list .riquadro-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-items: center;
+}
+
+.riquadro-list .riquadro-item {
+    padding: 15px;
+    background-color: #f1f1f1;
+    border: 2px solid #4a90e2;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+    width: 80px;
+}
+
+.riquadro-list .riquadro-item:hover {
+    background-color: #eaeaea;
+    border-color: #357ab8;
+}
+
+.riquadro-list .riquadro-item a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.riquadro-list .riquadro-item a:hover {
+    color: #333;
+}
+
+/* Stile per le form e i pulsanti */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fdfdfd;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #4a90e2;
+    margin-bottom: 20px;
+    font-size: 24px;
 }
 
 .form-group {
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
-/* Form a larghezza completa */
-.form-group.full-width {
-    grid-column: 1 / -1; /* Occupa tutta la larghezza della griglia */
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+    font-size: 16px;
 }
 
-/* Ottimizzazioni per schermi più piccoli */
+.form-group select {
+    width: 60%;
+    padding: 12px 16px;
+    border: 2px solid #4a90e2;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    font-size: 16px;
+    color: #333;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    appearance: none;
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiAxMiIgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjNDU0QTkzIj48cGF0aCBkPSJNMy41NzMgMy43NjNhMSAxIDAgMDEuODM5LS4zODZoNi4xMTJhMSAxIDAgMDEuODU5IDEuNDEybC00LjA4NSA0LjA4NWEyIDIgMCAwMS0yLjg0IDBMMi43MyA0Ljc5N2ExIDEgMCAwMS44NDctMS4wMzR6Ii8+PC9zdmc+');
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 12px 12px;
+}
+
+.form-group select:focus {
+    border-color: #357ab8;
+    box-shadow: 0 0 8px rgba(53, 122, 184, 0.5);
+    outline: none;
+}
+
+button[type="submit"] {
+    display: block;
+    padding: 12px 20px;
+    margin: 0 auto;
+    background-color: #4a90e2;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+button[type="submit"]:hover {
+    background-color: #357ab8;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Stili per i riquadri */
+.riquadri-container {
+    margin-top: 30px;
+}
+
+.letter-row {
+    margin-bottom: 20px;
+}
+
+.letter-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #4a90e2;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.riquadri-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.grid-item {
+    display: inline-block;
+    width: 70px;
+    height: 70px;
+    line-height: 70px;
+    background-color: #f1f1f1;
+    border: 2px solid #4a90e2;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.grid-item:hover {
+    background-color: #eaeaea;
+    border-color: #357ab8;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+hr {
+    margin: 20px 0;
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
+}
+
+/* Container generale per la selezione dei riquadri */
+.riquadro-selection-container {
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+/* Titolo della sezione */
+.riquadro-selection-container h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #4a90e2;
+    text-align: center;
+}
+
+/* Griglia per visualizzare i riquadri */
+.riquadro-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 20px;
+    justify-items: center;
+}
+
+/* Stile per ogni riquadro */
+.riquadro-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background-color: #f7f7f7;
+    border: 2px solid #4a90e2;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s, transform 0.3s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Effetto hover per i riquadri */
+.riquadro-item:hover {
+    background-color: #eaeaea;
+    border-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+/* Link all'interno dei riquadri */
+.riquadro-item a {
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Stile per la riga della lettera */
+.letter-row {
+    margin-bottom: 20px;
+}
+
+/* Titolo di ogni lettera */
+.letter-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Media query per schermi più piccoli */
 @media (max-width: 768px) {
-    .form-grid {
-        grid-template-columns: 1fr; /* Una colonna su schermi piccoli */
+    .riquadro-list {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     }
-    .main-content {
-        margin-left: 0;
-        width: 100%;
+
+    .riquadro-item {
+        width: 80px;
+        height: 80px;
+        font-size: 16px;
     }
-    header {
-        width: 100%;
-        left: 0;
-    }
+}
+
+/* Miglioramenti per la schermata Prodotti e Giacenze */
+.prodotti-list h2,
+.giacenze-list h2 {
+    text-align: center;
+    color: #4a90e2;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.table-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    text-decoration: none;
+    color: #000000;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: #4a90e2;
+}
+
+.btn-primary:hover {
+    background-color: #357ab8;
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: #7f8c8d;
+}
+
+.btn-secondary:hover {
+    background-color: #95a5a6;
+    transform: translateY(-2px);
+}
+
+.form-group.inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-group.inline label {
+    margin-bottom: 0;
+    font-weight: bold;
+    flex: 1;
+}
+
+.form-group.inline input,
+.form-group.inline select {
+    flex: 2;
+    margin-left: 10px;
+}
+
+/* Stile per la barra di ricerca */
+.search-bar {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-results {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fdfdfd;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-results h3 {
+    margin-bottom: 15px;
+    font-size: 22px;
+    color: #4a90e2;
+}
+
+.search-results ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.search-results ul li {
+    margin-bottom: 10px;
+}
+
+.search-results ul li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+}
+
+.search-results ul li a:hover {
+    color: #4a90e2;
+}
+
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+.search-bar {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.result-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-item a {
+    color: #333;
+    text-decoration: none;
+}
+
+.result-item a:hover {
+    text-decoration: underline;
+}
+
+.bottiglia-info {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin-bottom: 20px;
+}
+
+.bottiglia-info .row {
+    margin-bottom: 10px;
+}
+
+
+/* Migliora lo stile delle collocazioni attuali */
+.current-locations ul {
+    padding-left: 20px;
+}
+
+.current-locations li {
+    list-style-type: disc;
+    margin-bottom: 5px;
+}
+
+/* Migliora lo stile dei pulsanti */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+/* Migliora lo stile delle sezioni di azioni rapide */
+.quick-actions {
+    margin-top: 30px;
+}
+
+.action-item {
+    margin-bottom: 20px;
+}
+
+.action-item h4 {
+    margin-bottom: 10px;
+}
+
+#aggiunta-quantita-section,
+#sposta-quantita-section {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+/* Stile generale per gli input e i select */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"],
+input[type="datetime-local"],
+select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0 15px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 25px; /* Arrotonda gli angoli */
+    box-sizing: border-box;
+    font-size: 16px; /* Dimensione del font accogliente */
+    background-color: #f9f9f9; /* Colore di sfondo chiaro */
+    transition: border-color 0.3s ease; /* Transizione morbida */
+}
+
+/* Stile quando l'input è attivo (focus) */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="datetime-local"]:focus,
+select:focus {
+    border-color: #66afe9; /* Colore del bordo quando l'input è attivo */
+    outline: none; /* Rimuove l'effetto di outline predefinito */
+    background-color: #ffffff; /* Sfondo più chiaro quando attivo */
+}
+
+/* Stile specifico per i select (dropdown) */
+select {
+    appearance: none; /* Rimuove la freccia di default su alcuni browser */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%2366afe9' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 30px; /* Spazio extra per la freccia */
+}
+
+/* Stile per il bottone di submit */
+button[type="submit"] {
+    width: 100%;
+    background-color: #66afe9;
+    color: white;
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button[type="submit"]:hover {
+    background-color: #5a9bd8;
+}
+
+/* Stile per i form container */
+.form-group {
+    margin-bottom: 20px;
 }

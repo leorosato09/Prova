@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Movimenti</h1>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Descrizione</th>
+                <th>Quantità</th>
+                <th>Utente</th>
+                <th>Tipo di Movimento</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movimento in movimenti %}
+            <tr>
+                <td>{{ movimento.descrizione }}</td>
+                <td>{{ movimento.quantita }}</td>
+                <td>{{ movimento.utente }}</td>
+                <td>{{ movimento.tipo_movimento }}</td>
+                <td>
+                    <button class="btn btn-info" onclick="toggleDetails('{{ movimento._id }}')">Dettagli</button>
+                </td>
+            </tr>
+            <tr id="details-{{ movimento._id }}" style="display:none;">
+                <td colspan="5">
+                    <div>
+                        <strong>Origine:</strong> 
+                        {% if movimento.collocazione_origine %}
+                            {{ movimento.collocazione_origine | join(', ') }}
+                        {% else %}
+                            Nessuna
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>Destinazione:</strong> 
+                        {% if movimento.collocazione_destinazione %}
+                            {{ movimento.collocazione_destinazione | join(', ') }}
+                        {% else %}
+                            Nessuna
+                        {% endif %}
+                    </div>
+                    <div>
+                        <strong>Orario:</strong> {{ movimento.orario }}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function toggleDetails(id) {
+        const detailsRow = document.getElementById(`details-${id}`);
+        if (detailsRow.style.display === 'none') {
+            detailsRow.style.display = 'table-row';
+        } else {
+            detailsRow.style.display = 'none';
+        }
+    }
+</script>
+
+{% endblock %}

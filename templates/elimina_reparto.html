@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="elimina-reparto-container">
+    <h2>Elimina Reparto</h2>
+    <p>Sei sicuro di voler eliminare il reparto "{{ reparto.nome }} | {{ reparto.valore }}%"?</p>
+    <form method="POST" action="{{ url_for('elimina_reparto', id=reparto._id) }}">
+        <div class="form-group full-width">
+            <button type="submit">Sì, Elimina</button>
+            <button type="button" onclick="window.location.href='{{ url_for('reparti') }}';">Annulla</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

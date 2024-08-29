@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+Configura Riquadro Unico - {{ area }} / {{ sotto_area }}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Configura Riquadro Unico - {{ area }} / {{ sotto_area }}</h1>
+
+    <form method="POST" action="{{ url_for('configura_riquadro_unico', area=area, sotto_area=sotto_area) }}">
+        <div class="form-group">
+            <label for="codice_a_barre">Codice a Barre</label>
+            <input type="text" id="codice_a_barre" name="codice_a_barre" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="quantita">Quantità</label>
+            <input type="number" id="quantita" name="quantita" class="form-control" value="1" min="1" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Aggiungi Bottiglia</button>
+    </form>
+
+    <h2>Bottiglie nel Riquadro Unico</h2>
+    <ul>
+        {% for bottiglia in bottiglie %}
+        <li>{{ bottiglia.descrizione }} - Quantità: {{ bottiglia.quantita }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}
+Visione Magazzino
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Visione Magazzino</h1>
+    <form action="{{ url_for('visione_magazzino') }}" method="POST">
+        <div class="form-group">
+            <label for="area">Area:</label>
+            <select id="area" name="area" required onchange="aggiornaSottoAree()">
+                <option value="" disabled selected>Seleziona un'area</option>
+                <option value="Sala Principale" {% if area == "Sala Principale" %}selected{% endif %}>Sala Principale</option>
+                <option value="Sala Secondaria" {% if area == "Sala Secondaria" %}selected{% endif %}>Sala Secondaria</option>
+                <option value="Soppalco" {% if area == "Soppalco" %}selected{% endif %}>Soppalco</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="sotto_area">Sotto-Area:</label>
+            <select id="sotto_area" name="sotto_area" required onchange="mostraSelezioneFrigo()">
+                <option value="" disabled selected>Seleziona una sotto-area</option>
+                {% if area == "Sala Principale" %}
+                    <option value="Scaffali" {% if sotto_area == "Scaffali" %}selected{% endif %}>Scaffali</option>
+                    <option value="Frighi" {% if sotto_area == "Frighi" %}selected{% endif %}>Frighi</option>
+                    <option value="Frighetto" {% if sotto_area == "Frighetto" %}selected{% endif %}>Frighetto</option>
+                {% elif area == "Sala Secondaria" %}
+                    <option value="Scaffali" {% if sotto_area == "Scaffali" %}selected{% endif %}>Scaffali</option>
+                {% elif area == "Soppalco" %}
+                    <option value="Scaffali" {% if sotto_area == "Scaffali" %}selected{% endif %}>Scaffali</option>
+                    <option value="Chiuso" {% if sotto_area == "Chiuso" %}selected{% endif %}>Chiuso</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Invia</button>
+    </form>
+
+    {% if riquadri_disponibili %}
+    <div class="riquadro-selection-container">
+        <h2>{{ area }} - {{ sotto_area }}{% if frigo %} - {{ frigo }}{% endif %}</h2>
+        <div class="riquadro-list">
+            {% for riquadro in riquadri_disponibili %}
+            <div class="riquadro-item">
+                <a href="{{ url_for('visualizza_riquadro', area=area, sotto_area=sotto_area, frigo=frigo, riquadro=riquadro) }}">
+                    {{ riquadro }}
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+        <p>Nessun riquadro disponibile per l'area selezionata.</p>
+    {% endif %}
+</div>
+
+<script>
+    function aggiornaSottoAree() {
+        var area = document.getElementById("area").value;
+        var sottoArea = document.getElementById("sotto_area");
+        
+        // Svuota il menu sotto-area
+        sottoArea.innerHTML = '<option value="" disabled selected>Seleziona una sotto-area</option>';
+        
+        // Opzioni dipendenti dall'area
+        var opzioni = [];
+        if (area === "Sala Principale") {
+            opzioni = ["Scaffali", "Frighi", "Frighetto"];
+        } else if (area === "Sala Secondaria") {
+            opzioni = ["Scaffali"];
+        } else if (area === "Soppalco") {
+            opzioni = ["Scaffali", "Chiuso"];
+        }
+        
+        // Aggiungi le opzioni al menu sotto-area
+        opzioni.forEach(function(opzione) {
+            var opt = document.createElement('option');
+            opt.value = opzione;
+            opt.innerHTML = opzione;
+            sottoArea.appendChild(opt);
+        });
+    }
+
+    function mostraSelezioneFrigo() {
+        var sottoArea = document.getElementById("sotto_area").value;
+        var selezioneFrigo = document.getElementById("selezione-frigo");
+        if (sottoArea === "Frighi") {
+            selezioneFrigo.style.display = "block";
+        } else {
+            selezioneFrigo.style.display = "none";
+        }
+    }
+    
+    // Mostra o nasconde il selettore del frigo in base alla sotto-area inizialmente selezionata
+    mostraSelezioneFrigo();
+</script>
+
+{% endblock %}

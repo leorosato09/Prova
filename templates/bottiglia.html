@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Scheda Bottiglia - {{ bottiglia.descrizione }}</h1>
+
+    <!-- Sezione Informazioni della Bottiglia -->
+    <div class="bottiglia-info">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Descrizione:</strong> {{ bottiglia.descrizione }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Costo:</strong> {{ bottiglia.costo }} €</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Prezzo Base:</strong> {{ bottiglia.prezzo_base }} €</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Categoria:</strong> {{ bottiglia.categoria }}</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Reparto:</strong> {{ bottiglia.reparto }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Quantità in Magazzino:</strong> {{ bottiglia.quantita_totale }} pezzi</p>
+            </div>
+        </div>
+        
+        <!-- Sezione Collocazioni -->
+        <div class="row">
+            <div class="col-12">
+                <h4>Collocazioni Attuali:</h4>
+                <ul>
+                    {% for collocazione in bottiglia.collocazioni %}
+                        <li>{{ collocazione.collocazione_1 }}/{{ collocazione.collocazione_2 }}/{{ collocazione.riquadro }} - {{ collocazione.quantita }} pezzi</li>
+                    {% else %}
+                        <li>Nessuna collocazione disponibile</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comandi Rapidi -->
+    <div class="quick-actions mt-4">
+        <h3>Comandi Rapidi</h3>
+        <div class="action-item">
+            <h4>Aggiunta Quantità</h4>
+            <button class="btn btn-primary" onclick="toggleSection('aggiunta-quantita-section')">Aggiungi Bottiglia</button>
+            <div id="aggiunta-quantita-section" style="display:none;">
+                <form method="POST" action="{{ url_for('aggiungi_bottiglia', id=bottiglia._id) }}">
+                    <div class="form-group">
+                        <label for="area">Area</label>
+                        <select id="area" name="area" class="form-control">
+                            <option value="Sala Principale">Sala Principale</option>
+                            <option value="Sala Secondaria">Sala Secondaria</option>
+                            <option value="Soppalco">Soppalco</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sotto_area">Sotto Area</label>
+                        <select id="sotto_area" name="sotto_area" class="form-control">
+                            <!-- Popolato dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="riquadro">Riquadro</label>
+                        <select id="riquadro" name="riquadro" class="form-control">
+                            <!-- Popolato dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantita">Quantità</label>
+                        <input type="number" id="quantita" name="quantita" class="form-control" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Aggiungi Quantità</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="action-item mt-3">
+            <h4>Sposta Quantità</h4>
+            <button class="btn btn-primary" onclick="toggleSection('sposta-quantita-section')">Sposta Bottiglia</button>
+            <div id="sposta-quantita-section" style="display:none;">
+                <form method="POST" action="{{ url_for('sposta_bottiglia', id=bottiglia._id) }}">
+                    <div class="form-group">
+                        <label for="collocazione_esistente">Collocazione Esistente</label>
+                        <select id="collocazione_esistente" name="collocazione_esistente" class="form-control">
+                            {% for collocazione in bottiglia.collocazioni %}
+                                <option value="{{ collocazione.collocazione_1 }}/{{ collocazione.collocazione_2 }}/{{ collocazione.riquadro }}">
+                                    {{ collocazione.collocazione_1 }}/{{ collocazione.collocazione_2 }}/{{ collocazione.riquadro }} - {{ collocazione.quantita }} pezzi
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="nuova_area">Nuova Area</label>
+                        <select id="nuova_area" name="nuova_area" class="form-control">
+                            <option value="Sala Principale">Sala Principale</option>
+                            <option value="Sala Secondaria">Sala Secondaria</option>
+                            <option value="Soppalco">Soppalco</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="nuova_sotto_area">Nuova Sotto Area</label>
+                        <select id="nuova_sotto_area" name="nuova_sotto_area" class="form-control">
+                            <!-- Popolato dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="nuovo_riquadro">Nuovo Riquadro</label>
+                        <select id="nuovo_riquadro" name="nuovo_riquadro" class="form-control">
+                            <!-- Popolato dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantita_da_spostare">Quantità da Spostare</label>
+                        <input type="number" id="quantita_da_spostare" name="quantita_da_spostare" class="form-control" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sposta Quantità</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSection(sectionId) {
+        var section = document.getElementById(sectionId);
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.getElementById('area').addEventListener('change', function() {
+        updateSottoAreaAndRiquadro(this.value, 'sotto_area', 'riquadro');
+    });
+
+    document.getElementById('nuova_area').addEventListener('change', function() {
+        updateSottoAreaAndRiquadro(this.value, 'nuova_sotto_area', 'nuovo_riquadro');
+    });
+
+    function updateSottoAreaAndRiquadro(area, sottoAreaId, riquadroId) {
+        const sottoAreaSelect = document.getElementById(sottoAreaId);
+        const riquadroSelect = document.getElementById(riquadroId);
+
+        const sottoAree = {
+            "Sala Principale": ["Scaffali", "Frighi", "Frighetto"],
+            "Sala Secondaria": ["Scaffali"],
+            "Soppalco": ["Scaffali", "Chiuso"]
+        };
+
+        const riquadri = {
+            "Scaffali": {
+                "Sala Principale": [
+                    ...generateRiquadri("A", 5), 
+                    ...generateRiquadri("B", 5),
+                    ...generateRiquadri("C", 3), 
+                    ...generateRiquadri("D", 3),
+                    ...generateRiquadri("E", 3), 
+                    ...generateRiquadri("F", 3),
+                    ...generateRiquadri("G", 3),
+                    ...generateRiquadri("H", 5), 
+                    ...generateRiquadri("I", 5)
+                ],
+                "Sala Secondaria": [
+                    ...generateRiquadri("A", 5), 
+                    ...generateRiquadri("B", 5)
+                ],
+                "Soppalco": ["A", "B", "C", "D"]
+            },
+            "Frighi": {
+                "Sala Principale": ["Frigo Sx", "Frigo Dx"]
+            },
+            "Frighetto": {
+                "Sala Principale": ["Unico"]
+            },
+            "Chiuso": {
+                "Soppalco": ["Unico"]
+            }
+        };
+
+        function generateRiquadri(letter, max) {
+            return Array.from({ length: max }, (_, i) => `${letter}${i + 1}`);
+        }
+
+        sottoAreaSelect.innerHTML = sottoAree[area].map(sa => `<option value="${sa}">${sa}</option>`).join('');
+
+        const selectedSottoArea = sottoAreaSelect.value;
+        riquadroSelect.innerHTML = riquadri[selectedSottoArea][area].map(r => `<option value="${r}">${r}</option>`).join('');
+
+        sottoAreaSelect.addEventListener('change', function() {
+            const selectedSottoArea = this.value;
+            riquadroSelect.innerHTML = riquadri[selectedSottoArea][area].map(r => `<option value="${r}">${r}</option>`).join('');
+        });
+    }
+
+    updateSottoAreaAndRiquadro(document.getElementById('area').value, 'sotto_area', 'riquadro');
+    updateSottoAreaAndRiquadro(document.getElementById('nuova_area').value, 'nuova_sotto_area', 'nuovo_riquadro');
+</script>
+
+{% endblock %}

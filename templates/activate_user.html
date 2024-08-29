@@ -1,0 +1,14 @@
+<form method="POST" action="{{ url_for('activate_user', user_id=user._id) }}">
+    <h2>Attivazione Account per {{ user.username }}</h2>
+    <p>Email: {{ user.email }}</p>
+    
+    <div class="form-group">
+        <label for="role">Assegna Ruolo</label>
+        <select id="role" name="role" class="form-control">
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+        </select>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Attiva Account</button>
+</form>

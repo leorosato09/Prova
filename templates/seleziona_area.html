@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('visione_magazzino') }}">
+    <div class="form-group">
+        <label for="area">Seleziona Area</label>
+        <select id="area" name="area" required>
+            <option value="Sala Principale">Sala Principale</option>
+            <option value="Sala Secondaria">Sala Secondaria</option>
+            <option value="Soppalco">Soppalco</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="sotto_area">Seleziona Sotto-Area</label>
+        <select id="sotto_area" name="sotto_area" required>
+            <option value="Scaffali">Scaffali</option>
+            <option value="Frighi">Frighi</option>
+            <option value="Frighetto">Frighetto</option>
+            <option value="Chiuso">Chiuso</option>
+        </select>
+    </div>
+    <button type="submit">Seleziona</button>
+</form>
+{% endblock %}

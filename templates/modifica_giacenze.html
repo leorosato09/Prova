@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Modifica Giacenze - {{ prodotto.descrizione }}</h1>
+    
+    <form method="POST" action="{{ url_for('modifica_giacenze', id=prodotto._id) }}">
+        <div class="form-group">
+            <label for="tipo_movimento">Tipo di Movimento</label>
+            <select id="tipo_movimento" name="tipo_movimento" class="form-control" required>
+                <option value="Rettifica">Rettifica</option>
+                <option value="Rettifica">Rifornimento</option>
+                <option value="Vendita">Vendita</option>
+                <option value="Reso">Reso</option>
+                <option value="Consumo">Consumo</option>
+                <option value="Prova 1">Prova 1</option>
+                <option value="Prova 2">Prova 2</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="orario">Orario</label>
+            <input type="datetime-local" id="orario" name="orario" class="form-control" value="{{ current_time }}" required>
+        </div>
+        
+        <div id="collocazioni-container">
+            {% for collocazione in prodotto.collocazioni %}
+            <div class="collocazione-group">
+                <div class="form-group">
+                    <label for="collocazione_1">Collocazione 1</label>
+                    <select name="collocazione_1[]" class="form-control" onchange="updateCollocazione2(this)">
+                        <option value="Sala Principale" {% if collocazione.collocazione_1 == 'Sala Principale' %}selected{% endif %}>Sala Principale</option>
+                        <option value="Sala Secondaria" {% if collocazione.collocazione_1 == 'Sala Secondaria' %}selected{% endif %}>Sala Secondaria</option>
+                        <option value="Soppalco" {% if collocazione.collocazione_1 == 'Soppalco' %}selected{% endif %}>Soppalco</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="collocazione_2">Collocazione 2</label>
+                    <select name="collocazione_2[]" class="form-control">
+                        <option value="{{ collocazione.collocazione_2 }}" selected>{{ collocazione.collocazione_2 }}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantita">Quantità</label>
+                    <input type="number" name="quantita[]" class="form-control" value="{{ collocazione.quantita }}" min="1">
+                </div>
+
+                <button type="button" class="btn btn-danger" onclick="removeCollocazione(this)">Rimuovi Collocazione</button>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <button type="button" class="btn btn-secondary" onclick="addCollocazione()">Aggiungi Collocazione</button>
+
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-primary">Salva Giacenze</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateCollocazione2(selectElement) {
+        const collocazione1 = selectElement.value;
+        const collocazione2Select = selectElement.closest('.collocazione-group').querySelector('select[name="collocazione_2[]"]');
+
+        let options = '';
+        if (collocazione1 === 'Sala Principale') {
+            options = '<option value="Scaffali">Scaffali</option><option value="Frighi">Frighi</option><option value="Frighetto">Frighetto</option>';
+        } else if (collocazione1 === 'Sala Secondaria') {
+            options = '<option value="Scaffali">Scaffali</option>';
+        } else if (collocazione1 === 'Soppalco') {
+            options = '<option value="Scaffali">Scaffali</option><option value="Chiuso">Chiuso</option>';
+        }
+        collocazione2Select.innerHTML = options;
+    }
+
+    function addCollocazione() {
+        const container = document.getElementById('collocazioni-container');
+        const newCollocazione = document.createElement('div');
+        newCollocazione.classList.add('collocazione-group');
+        newCollocazione.innerHTML = `
+            <div class="form-group">
+                <label for="collocazione_1">Collocazione 1</label>
+                <select name="collocazione_1[]" class="form-control" onchange="updateCollocazione2(this)">
+                    <option value="Sala Principale">Sala Principale</option>
+                    <option value="Sala Secondaria">Sala Secondaria</option>
+                    <option value="Soppalco">Soppalco</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="collocazione_2">Collocazione 2</label>
+                <select name="collocazione_2[]" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label for="quantita">Quantità</label>
+                <input type="number" name="quantita[]" class="form-control" min="1">
+            </div>
+            <button type="button" class="btn btn-danger" onclick="removeCollocazione(this)">Rimuovi Collocazione</button>
+        `;
+        container.appendChild(newCollocazione);
+    }
+
+    function removeCollocazione(button) {
+        const collocazioneGroup = button.closest('.collocazione-group');
+        collocazioneGroup.remove();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Seleziona Area e Sotto-Area</h2>
+    <form method="POST" action="{{ url_for('visione_magazzino') }}">
+        <div class="form-group">
+            <label for="area">Seleziona Area:</label>
+            <select id="area" name="area" class="form-control" required onchange="updateSottoAreaOptions()">
+                <option value="Sala Principale" {% if area == "Sala Principale" %}selected{% endif %}>Sala Principale</option>
+                <option value="Sala Secondaria" {% if area == "Sala Secondaria" %}selected{% endif %}>Sala Secondaria</option>
+                <option value="Soppalco" {% if area == "Soppalco" %}selected{% endif %}>Soppalco</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="sotto_area">Seleziona Sotto-Area:</label>
+            <select id="sotto_area" name="sotto_area" class="form-control" required>
+                <!-- Le opzioni saranno aggiornate dinamicamente -->
+            </select>
+        </div>
+
+        <div class="form-group" id="frigo-select-group" style="display: none;">
+            <label for="frigo">Seleziona Frigo:</label>
+            <select id="frigo" name="frigo" class="form-control">
+                <!-- Le opzioni per il frigo saranno aggiunte dinamicamente -->
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Seleziona</button>
+    </form>
+</div>
+
+<script>
+    function updateSottoAreaOptions() {
+        var area = document.getElementById('area').value;
+        var sottoAreaSelect = document.getElementById('sotto_area');
+        var frigoSelectGroup = document.getElementById('frigo-select-group');
+
+        // Pulisce le opzioni esistenti
+        sottoAreaSelect.innerHTML = '';
+        frigoSelectGroup.style.display = 'none'; // Nascondi il selettore del frigo per impostazione predefinita
+
+        if (area === 'Sala Principale') {
+            sottoAreaSelect.add(new Option('Scaffali', 'Scaffali'));
+            sottoAreaSelect.add(new Option('Frighi', 'Frighi'));
+            sottoAreaSelect.add(new Option('Frighetto', 'Frighetto'));
+        } else if (area === 'Sala Secondaria') {
+            sottoAreaSelect.add(new Option('Scaffali', 'Scaffali'));
+        } else if (area === 'Soppalco') {
+            sottoAreaSelect.add(new Option('Scaffali', 'Scaffali'));
+            sottoAreaSelect.add(new Option('Chiuso', 'Chiuso'));
+        }
+    }
+
+    document.getElementById('sotto_area').addEventListener('change', function () {
+        var sottoArea = this.value;
+        var frigoSelectGroup = document.getElementById('frigo-select-group');
+
+        if (sottoArea === 'Frighi') {
+            frigoSelectGroup.style.display = 'block'; // Mostra il selettore del frigo
+        } else {
+            frigoSelectGroup.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSottoAreaOptions();
+    });
+</script>
+{% endblock %}

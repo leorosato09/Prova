@@ -14,7 +14,10 @@
             <li class="dropdown">
                 <a href="#" class="dropbtn">Magazzino</a>
                 <ul class="dropdown-content">
-                    <li><a href="{{ url_for('gestione_magazzino') }}">Gestione Magazzino</a></li>
+                    <li><a href="{{ url_for('giacenze') }}">Giacenze</a></li>
+                    <li><a href="{{ url_for('movimenti') }}">Movimenti</a></li>
+                    <li><a href="{{ url_for('visione_magazzino') }}">Visione Magazzino</a></li>
+                    <li><a href="{{ url_for('ricerca_riquadri') }}">Configura Magazzino</a></li>
                 </ul>
             </li>
             <li class="dropdown">
@@ -25,7 +28,7 @@
                     <li class="dropdown">
                         <a href="#" class="dropbtn">Prodotti e Varianti</a>
                         <ul class="dropdown-subcontent-list">
-                            <li><a href="{{ url_for('crea_prodotto') }}">Prodotti</a></li>
+                            <li><a href="{{ url_for('prodotti') }}">Prodotti</a></li>
                             <li><a href="{{ url_for('attributi') }}">Attributi</a></li>
                         </ul>
                     </li>
@@ -34,7 +37,7 @@
             <li><a href="{{ url_for('account') }}">Account</a></li>
             <li><a href="{{ url_for('logout') }}">Logout</a></li>
         </ul>
-    </div>
+    </div>    
     {% endif %}
 
     <div class="main-content">
@@ -43,46 +46,22 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Gestione dell'apertura delle sottoschede
-            var dropdownButtons = document.querySelectorAll('.sidebar .navbar li.dropdown > a');
+        // Non è più necessario gestire l'apertura/chiusura delle sottoschede
+document.addEventListener('DOMContentLoaded', function() {
+    // Mantiene attiva la selezione corrente nel menu
+    var currentPath = window.location.pathname;
+    var links = document.querySelectorAll('.sidebar .navbar a');
 
-            dropdownButtons.forEach(function(button) {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault(); // Impedisce il comportamento predefinito del link
-                    var parentLi = this.parentElement;
-                    var dropdownContent = parentLi.querySelector('.dropdown-content');
+    links.forEach(function(link) {
+        if (link.href.includes(currentPath)) {
+            link.parentElement.classList.add('active');
+            if (link.closest('.dropdown-content')) {
+                link.closest('.dropdown').classList.add('active');
+            }
+        }
+    });
+});
 
-                    // Chiudi tutte le sottoschede aperte
-                    document.querySelectorAll('.sidebar .navbar li.dropdown .dropdown-content').forEach(function(content) {
-                        if (content !== dropdownContent) {
-                            content.style.display = 'none';
-                        }
-                    });
-
-                    // Alterna la visualizzazione della sottoscheda cliccata
-                    if (dropdownContent.style.display === 'block') {
-                        dropdownContent.style.display = 'none';
-                    } else {
-                        dropdownContent.style.display = 'block';
-                    }
-                });
-            });
-
-            // Mantiene attiva la selezione corrente nel menu
-            var currentPath = window.location.pathname;
-            var links = document.querySelectorAll('.sidebar .navbar a');
-
-            links.forEach(function(link) {
-                if (link.href.includes(currentPath)) {
-                    link.parentElement.classList.add('active');
-                    if (link.closest('.dropdown-content')) {
-                        link.closest('.dropdown').classList.add('active');
-                        link.closest('.dropdown-content').style.display = 'block';
-                    }
-                }
-            });
-        });
     </script>
 </body>
 </html>

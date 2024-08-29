@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Bottiglie da Posizionare in {{ area }} - {{ sotto_area }}</h1>
+    <h3>Totale bottiglie da posizionare: {{ totale_bottiglie }}</h3>
+
+    <form method="POST" action="{{ url_for('posiziona_bottiglie') }}">
+        <input type="hidden" name="area" value="{{ area }}">
+        <input type="hidden" name="sotto_area" value="{{ sotto_area }}">
+
+        <div class="form-group">
+            <label for="riquadro">Seleziona il Riquadro in cui posizionare le bottiglie:</label>
+            <select id="riquadro" name="riquadro" class="form-control">
+                <!-- Genera dinamicamente la lista dei riquadri disponibili -->
+                {% for riquadro in riquadri_disponibili %}
+                <option value="{{ riquadro }}">{{ riquadro }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Posiziona Bottiglie</button>
+        </div>
+    </form>
+
+    <ul>
+    {% for bottiglia in bottiglie %}
+        <li>{{ bottiglia.descrizione }} - Quantità: {{ bottiglia.collocazioni[0].quantita }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endblock %}

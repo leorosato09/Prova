@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Riquadro: {{ area }} / {{ sotto_area }} - {{ riquadro }}</h2>
+
+    <p><strong>Valore totale del riquadro:</strong> €{{ valore_totale_riquadro }}</p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Descrizione</th>
+                <th>Categoria</th>
+                <th>Quantità</th>
+                <th>Prezzo Base (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if bottiglie %}
+                {% for bottiglia in bottiglie %}
+                    <tr>
+                        <td>{{ bottiglia.descrizione }}</td>
+                        <td>{{ bottiglia.categoria }}</td>
+                        <td>{{ bottiglia.quantita }}</td>
+                        <td>{{ bottiglia.prezzo_base }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4" class="text-center"><em>Non ci sono bottiglie in questo riquadro</em></td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
