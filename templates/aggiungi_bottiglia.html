@@ -1,103 +1,118 @@
-{% extends "base.html" %}
+<form method="POST" action="{{ url_for('crea_prodotto') }}">
+    <div class="form-group">
+        <label for="descrizione">Descrizione</label>
+        <input type="text" id="descrizione" name="descrizione" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label for="costo">Costo</label>
+        <input type="number" id="costo" name="costo" class="form-control" step="0.01" required>
+    </div>
+    <div class="form-group">
+        <label for="prezzo_base">Prezzo Base</label>
+        <input type="number" id="prezzo_base" name="prezzo_base" class="form-control" step="0.01" required>
+    </div>
+    <div class="form-group">
+        <label for="categoria">Categoria</label>
+        <input type="text" id="categoria" name="categoria" class="form-control" required>
+    </div>
+    <div class="form-group">
+        <label for="reparto">Reparto</label>
+        <input type="text" id="reparto" name="reparto" class="form-control" required>
+    </div>
 
-{% block content %}
-<div class="container">
-    <h1>Aggiungi Nuova Bottiglia</h1>
-    <form method="POST" action="{{ url_for('crea_prodotto') }}">
-        <div class="form-group">
-            <label for="descrizione">Descrizione</label>
-            <input type="text" id="descrizione" name="descrizione" class="form-control">
-        </div>
+    <!-- Aggiungi il campo riquadro opzionale -->
+    <div class="form-group">
+        <label for="area">Area</label>
+        <select id="area" name="area" class="form-control">
+            <option value="">Nessuna</option>
+            <option value="Sala Principale">Sala Principale</option>
+            <option value="Sala Secondaria">Sala Secondaria</option>
+            <option value="Soppalco">Soppalco</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="sotto_area">Sotto Area</label>
+        <select id="sotto_area" name="sotto_area" class="form-control">
+            <option value="">Nessuna</option>
+            <!-- Popolato dinamicamente -->
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="riquadro">Riquadro</label>
+        <select id="riquadro" name="riquadro" class="form-control">
+            <option value="">Nessuno</option>
+            <!-- Popolato dinamicamente -->
+        </select>
+    </div>
 
-        <div class="form-group">
-            <label for="prezzo_base">Prezzo Base (€)</label>
-            <input type="number" step="0.01" id="prezzo_base" name="prezzo_base" class="form-control">
-        </div>
+    <!-- Quantità diventa opzionale -->
+    <div class="form-group">
+        <label for="quantita">Quantità (Opzionale)</label>
+        <input type="number" id="quantita" name="quantita" class="form-control" min="0">
+    </div>
 
-        <div class="form-group">
-            <label for="categoria">Categoria</label>
-            <select id="categoria" name="categoria" class="form-control">
-                {% for categoria in categorie %}
-                <option value="{{ categoria.nome }}">{{ categoria.nome }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="reparto">Reparto</label>
-            <select id="reparto" name="reparto" class="form-control">
-                {% for reparto in reparti %}
-                <option value="{{ reparto.nome }}">{{ reparto.nome }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="codice_a_barre">Codice a Barre</label>
-            <input type="text" id="codice_a_barre" name="codice_a_barre" class="form-control">
-        </div>
-
-        <div class="form-group">
-            <label for="id_interno">ID Interno</label>
-            <input type="text" id="id_interno" name="id_interno" class="form-control">
-        </div>
-
-        <div id="collocazioni-container">
-            <div class="collocazione-group">
-                <div class="form-group">
-                    <label for="collocazione_1">Collocazione 1</label>
-                    <select id="collocazione_1" name="collocazione_1[]" class="form-control" onchange="updateCollocazione2(this)">
-                        <option value="Sala Principale">Sala Principale</option>
-                        <option value="Sala Secondaria">Sala Secondaria</option>
-                        <option value="Soppalco">Soppalco</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="collocazione_2">Collocazione 2</label>
-                    <select id="collocazione_2" name="collocazione_2[]" class="form-control">
-                        <!-- Opzioni aggiornate dinamicamente -->
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="quantita">Quantità</label>
-                    <input type="number" id="quantita" name="quantita[]" class="form-control" min="1">
-                </div>
-            </div>
-        </div>
-
-        <button type="button" class="btn btn-secondary" onclick="addCollocazione()">Aggiungi Collocazione</button>
-
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Salva Bottiglia</button>
-        </div>
-    </form>
-</div>
+    <button type="submit" class="btn btn-primary">Registra Bottiglia</button>
+</form>
 
 <script>
-    function updateCollocazione2(selectElement) {
-        const collocazione1 = selectElement.value;
-        const collocazione2Select = selectElement.closest('.collocazione-group').querySelector('select[name="collocazione_2[]"]');
+    document.getElementById('area').addEventListener('change', function() {
+        updateSottoAreaAndRiquadro(this.value, 'sotto_area', 'riquadro');
+    });
 
-        let options = '';
-        if (collocazione1 === 'Sala Principale') {
-            options = '<option value="Scaffali">Scaffali</option><option value="Frighi">Frighi</option><option value="Frighetto">Frighetto</option>';
-        } else if (collocazione1 === 'Sala Secondaria') {
-            options = '<option value="Scaffali">Scaffali</option>';
-        } else if (collocazione1 === 'Soppalco') {
-            options = '<option value="Scaffali">Scaffali</option><option value="Chiuso">Chiuso</option>';
+    function updateSottoAreaAndRiquadro(area, sottoAreaId, riquadroId) {
+        const sottoAreaSelect = document.getElementById(sottoAreaId);
+        const riquadroSelect = document.getElementById(riquadroId);
+
+        const sottoAree = {
+            "Sala Principale": ["Scaffali", "Frighi", "Frighetto"],
+            "Sala Secondaria": ["Scaffali"],
+            "Soppalco": ["Scaffali", "Chiuso"]
+        };
+
+        const riquadri = {
+            "Scaffali": {
+                "Sala Principale": [
+                    ...generateRiquadri("A", 5), 
+                    ...generateRiquadri("B", 5),
+                    ...generateRiquadri("C", 3), 
+                    ...generateRiquadri("D", 3),
+                    ...generateRiquadri("E", 3), 
+                    ...generateRiquadri("F", 3),
+                    ...generateRiquadri("G", 3),
+                    ...generateRiquadri("H", 5), 
+                    ...generateRiquadri("I", 5)
+                ],
+                "Sala Secondaria": [
+                    ...generateRiquadri("A", 5), 
+                    ...generateRiquadri("B", 5)
+                ],
+                "Soppalco": ["A", "B", "C", "D"]
+            },
+            "Frighi": {
+                "Sala Principale": ["Frigo Sx", "Frigo Dx"]
+            },
+            "Frighetto": {
+                "Sala Principale": ["Unico"]
+            },
+            "Chiuso": {
+                "Soppalco": ["Unico"]
+            }
+        };
+
+        function generateRiquadri(letter, max) {
+            return Array.from({ length: max }, (_, i) => `${letter}${i + 1}`);
         }
-        collocazione2Select.innerHTML = options;
+
+        sottoAreaSelect.innerHTML = sottoAree[area].map(sa => `<option value="${sa}">${sa}</option>`).join('');
+
+        const selectedSottoArea = sottoAreaSelect.value;
+        riquadroSelect.innerHTML = riquadri[selectedSottoArea][area].map(r => `<option value="${r}">${r}</option>`).join('');
+
+        sottoAreaSelect.addEventListener('change', function() {
+            const selectedSottoArea = this.value;
+            riquadroSelect.innerHTML = riquadri[selectedSottoArea][area].map(r => `<option value="${r}">${r}</option>`).join('');
+        });
     }
 
-    function addCollocazione() {
-        const container = document.getElementById('collocazioni-container');
-        const newCollocazione = container.firstElementChild.cloneNode(true);
-
-        newCollocazione.querySelectorAll('input').forEach(input => input.value = '');
-        newCollocazione.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-        container.appendChild(newCollocazione);
-    }
+    updateSottoAreaAndRiquadro(document.getElementById('area').value, 'sotto_area', 'riquadro');
 </script>
-{% endblock %}

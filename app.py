@@ -3,13 +3,13 @@ from flask_pymongo import PyMongo
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
+from datetime import datetime
 import os
 import certifi
 
 # Configurazione di base
 app = Flask(__name__)
 app.secret_key = 'Nibefile04ProgettoDB'
-
 
 # Configura MongoDB
 app.config["MONGO_URI"] = "mongodb+srv://leorosato09:Nibefile04@progettodb.vrk4x.mongodb.net/ProgettoDB?retryWrites=true&w=majority"
@@ -62,11 +62,12 @@ def registra_movimento(utente, descrizione, quantita, collocazione_origine, coll
         'utente': utente,
         'descrizione': descrizione,
         'quantita': quantita,
-        'collocazione_origine': collocazione_origine if collocazione_origine else None,
-        'collocazione_destinazione': collocazione_destinazione if collocazione_destinazione else None,
+        'collocazione_origine': collocazione_origine,
+        'collocazione_destinazione': collocazione_destinazione,
         'tipo_movimento': tipo_movimento,
         'orario': orario,
-        'prodotto_id': prodotto_id
+        'prodotto_id': prodotto_id,
+        'data': datetime.now()
     }
     movimenti_collection.insert_one(movimento)
 
@@ -94,22 +95,19 @@ def register():
         email = request.form['email']
         password = request.form['password']
         
-        # Verifica se l'utente esiste già
         existing_user = users_collection.find_one({'username': username})
         if existing_user:
             flash('Username già in uso, scegline un altro.')
         else:
             hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-            # Salva l'utente con lo stato "non attivo" e senza ruolo
             user_id = users_collection.insert_one({
                 'username': username,
                 'email': email,
                 'password': hashed_password,
-                'active': False,  # Utente non attivo
-                'role': None  # Nessun ruolo assegnato
+                'active': False,
+                'role': None
             }).inserted_id
             
-            # Invia una mail all'amministratore
             msg = Message('Nuova richiesta di registrazione', 
                           sender='your_email@gmail.com', 
                           recipients=['leorosato.rosato@gmail.com'])
@@ -125,6 +123,7 @@ http://localhost:5000/admin/activate_user/{user_id}
             flash('Registrazione avvenuta con successo! Attendi l\'approvazione dell\'amministratore.')
             return redirect(url_for('login'))
     return render_template('register.html')
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -139,7 +138,6 @@ def activate_user(user_id):
         return redirect(url_for('dashboard'))
     
     user = users_collection.find_one({'_id': ObjectId(user_id)})
-    
     if not user:
         flash('Utente non trovato.')
         return redirect(url_for('dashboard'))
@@ -150,8 +148,6 @@ def activate_user(user_id):
             {'_id': ObjectId(user_id)},
             {'$set': {'active': True, 'role': role}}
         )
-        
-        # Invia una mail di conferma all'utente
         msg = Message('Account attivato', 
                       sender='your_email@gmail.com', 
                       recipients=[user['email']])
@@ -162,12 +158,10 @@ Il tuo account è stato attivato con successo! Ora puoi accedere utilizzando le 
 Buona giornata!
 """
         mail.send(msg)
-        
         flash('Utente attivato con successo.')
         return redirect(url_for('dashboard'))
     
     return render_template('activate_user.html', user=user)
-
 
 # ---------------------------
 # Dashboard
@@ -178,128 +172,124 @@ Buona giornata!
 def dashboard():
     return render_template('dashboard.html')
 
+@app.route('/cercadashboard', methods=['GET'])
+@login_required
+def cerca_bottiglia_dashboard():
+    query = request.args.get('query')
+    if query:
+        risultati = list(bottiglie_collection.find({'descrizione': {'$regex': query, '$options': 'i'}}))
+        if risultati:
+            return render_template('dashboard.html', risultati=risultati, query=query)
+        else:
+            return render_template('dashboard.html', nessun_risultato=True, query=query)
+    return redirect(url_for('dashboard'))
+
+
+# ---------------------------
+# Gestione Bottiglie
+# ---------------------------
+
 @app.route('/sposta_bottiglia/<id>', methods=['POST'])
 @login_required
 def sposta_bottiglia(id):
-    collocazione_origine_area = request.form.get('collocazione_origine_area')
-    collocazione_origine_sotto_area = request.form.get('collocazione_origine_sotto_area')
-    collocazione_origine_riquadro = request.form.get('collocazione_origine_riquadro')
-    quantita_da_spostare = int(request.form.get('quantita_da_spostare'))
+    bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
+    if not bottiglia:
+        flash('Bottiglia non trovata.', 'danger')
+        return redirect(url_for('scheda_bottiglia', id=id))
 
+    collocazione_esistente = request.form.get('collocazione_esistente')
     nuova_area = request.form.get('nuova_area')
     nuova_sotto_area = request.form.get('nuova_sotto_area')
     nuovo_riquadro = request.form.get('nuovo_riquadro')
+    quantita_da_spostare = int(request.form.get('quantita_da_spostare'))
 
-    bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
-
-    collocazioni = bottiglia.get('collocazioni', [])
-    trovata = False
-
-    # Trova la collocazione di origine e diminuisci la quantità
-    for collocazione in collocazioni:
-        if (collocazione['collocazione_1'] == collocazione_origine_area and
-            collocazione['collocazione_2'] == collocazione_origine_sotto_area and
-            collocazione.get('riquadro') == collocazione_origine_riquadro):
-
-            if collocazione['quantita'] >= quantita_da_spostare:
-                collocazione['quantita'] -= quantita_da_spostare
-                trovata = True
-            else:
-                flash('Quantità insufficiente nella collocazione di origine.')
-                return redirect(url_for('scheda_bottiglia', id=id))
-            
-            if collocazione['quantita'] == 0:
-                collocazioni.remove(collocazione)
-
-            break
-
-    if not trovata:
-        flash('Collocazione di origine non trovata.')
+    if not nuova_area or not nuova_sotto_area or quantita_da_spostare <= 0:
+        flash('Informazioni mancanti o non valide.', 'danger')
         return redirect(url_for('scheda_bottiglia', id=id))
 
-    # Aggiungi la quantità alla nuova collocazione
-    for collocazione in collocazioni:
-        if (collocazione['collocazione_1'] == nuova_area and
-            collocazione['collocazione_2'] == nuova_sotto_area and
-            collocazione.get('riquadro') == nuovo_riquadro):
+    for collocazione in bottiglia['collocazioni']:
+        if (collocazione.get('collocazione_1') == collocazione_esistente.split('/')[0] and 
+            collocazione.get('collocazione_2') == collocazione_esistente.split('/')[1] and 
+            collocazione.get('riquadro') == (collocazione_esistente.split('/')[2] if len(collocazione_esistente.split('/')) > 2 else None)):
 
-            collocazione['quantita'] += quantita_da_spostare
+            quantita_disponibile = collocazione['quantita']
+
+            if quantita_da_spostare > quantita_disponibile:
+                flash(f'Non puoi spostare {quantita_da_spostare} bottiglie. Quantità disponibile: {quantita_disponibile}', 'danger')
+                return redirect(url_for('scheda_bottiglia', id=id))
+
+            collocazione['quantita'] -= quantita_da_spostare
+            if collocazione['quantita'] == 0:
+                bottiglia['collocazioni'].remove(collocazione)
             break
-    else:
-        collocazioni.append({
+
+    nuova_collocazione_trovata = False
+    for collocazione in bottiglia['collocazioni']:
+        if (collocazione['collocazione_1'] == nuova_area and 
+            collocazione['collocazione_2'] == nuova_sotto_area and 
+            collocazione.get('riquadro') == (nuovo_riquadro if nuovo_riquadro else None)):
+            
+            collocazione['quantita'] += quantita_da_spostare
+            nuova_collocazione_trovata = True
+            break
+
+    if not nuova_collocazione_trovata:
+        bottiglia['collocazioni'].append({
             'collocazione_1': nuova_area,
             'collocazione_2': nuova_sotto_area,
-            'riquadro': nuovo_riquadro,
+            'riquadro': nuovo_riquadro if nuovo_riquadro else None,
             'quantita': quantita_da_spostare
         })
 
-    bottiglie_collection.update_one(
-        {'_id': ObjectId(id)},
-        {'$set': {'collocazioni': collocazioni}}
-    )
-
-    # Registra il movimento nel database dei movimenti
-    registra_movimento(
-        utente=current_user.username,
-        descrizione=bottiglia['descrizione'],
-        quantita=quantita_da_spostare,
-        collocazione_origine=f'{collocazione_origine_area}/{collocazione_origine_sotto_area}/{collocazione_origine_riquadro}',
-        collocazione_destinazione=f'{nuova_area}/{nuova_sotto_area}/{nuovo_riquadro}',
-        tipo_movimento='Spostamento',
-        orario=request.form.get('orario'),
-        prodotto_id=id
-    )
-
-    flash('Quantità spostata con successo!')
+    bottiglie_collection.update_one({'_id': ObjectId(id)}, {'$set': {'collocazioni': bottiglia['collocazioni']}})
+    flash('Spostamento eseguito con successo.', 'success')
     return redirect(url_for('scheda_bottiglia', id=id))
-
 
 @app.route('/aggiungi_quantita/<id>', methods=['POST'])
 @login_required
 def aggiungi_bottiglia(id):
-    area = request.form.get('area')
-    sotto_area = request.form.get('sotto_area')
-    riquadro = request.form.get('riquadro')
-    quantita = int(request.form.get('quantita'))
+    try:
+        area = request.form.get('area')
+        sotto_area = request.form.get('sotto_area')
+        riquadro = request.form.get('riquadro')
+        quantita = int(request.form.get('quantita'))
 
-    # Recupera la bottiglia dal database
-    bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
+        bottiglia = bottiglie_collection.find_one({'_id': ObjectId(id)})
 
-    # Aggiungi la quantità alla collocazione specificata
-    nuove_collocazioni = bottiglia.get('collocazioni', [])
-    for collocazione in nuove_collocazioni:
-        if collocazione['collocazione_1'] == area and collocazione['collocazione_2'] == sotto_area and collocazione.get('riquadro') == riquadro:
-            collocazione['quantita'] += quantita
-            break
-    else:
-        nuove_collocazioni.append({
-            'collocazione_1': area,
-            'collocazione_2': sotto_area,
-            'riquadro': riquadro,
-            'quantita': quantita
-        })
+        nuove_collocazioni = bottiglia.get('collocazioni', [])
+        for collocazione in nuove_collocazioni:
+            if collocazione['collocazione_1'] == area and collocazione['collocazione_2'] == sotto_area and collocazione.get('riquadro') == riquadro:
+                collocazione['quantita'] += quantita
+                break
+        else:
+            nuove_collocazioni.append({
+                'collocazione_1': area,
+                'collocazione_2': sotto_area,
+                'riquadro': riquadro,
+                'quantita': quantita
+            })
 
-    # Aggiorna la bottiglia nel database
-    bottiglie_collection.update_one(
-        {'_id': ObjectId(id)},
-        {'$set': {'collocazioni': nuove_collocazioni, 'quantita_totale': bottiglia['quantita_totale'] + quantita}}
-    )
+        bottiglie_collection.update_one(
+            {'_id': ObjectId(id)},
+            {'$set': {'collocazioni': nuove_collocazioni, 'quantita_totale': bottiglia['quantita_totale'] + quantita}}
+        )
 
-    # Registra il movimento nel database dei movimenti
-    registra_movimento(
-        utente=current_user.username,
-        descrizione=bottiglia['descrizione'],
-        quantita=quantita,
-        collocazione_origine=None,  # Nessuna rimozione, solo aggiunta
-        collocazione_destinazione=f'{area}/{sotto_area}/{riquadro}',
-        tipo_movimento='Aggiunta',
-        orario=request.form.get('orario'),
-        prodotto_id=id
-    )
+        registra_movimento(
+            utente=current_user.username,
+            descrizione=bottiglia['descrizione'],
+            quantita=quantita,
+            collocazione_origine=None,
+            collocazione_destinazione=f'{area}/{sotto_area}/{riquadro}',
+            tipo_movimento='Aggiunta',
+            orario=request.form.get('orario'),
+            prodotto_id=id
+        )
 
-    flash('Quantità aggiunta con successo!')
+        flash('Quantità aggiunta con successo!', 'success')
+    except Exception as e:
+        flash(f'Errore durante l\'aggiunta della quantità: {str(e)}', 'danger')
+
     return redirect(url_for('scheda_bottiglia', id=id))
-
 
 # ---------------------------
 # Gestione del Magazzino
@@ -341,83 +331,111 @@ def modifica_giacenze(id):
 
         tipo_movimento = request.form.get('tipo_movimento')
         orario = request.form.get('orario')
+        app.logger.debug(f"Tipo movimento: {tipo_movimento}, Orario: {orario}")
 
         vecchia_collocazione = prodotto.get('collocazioni', [])
 
-        # Creiamo un dizionario per confrontare le vecchie collocazioni
         vecchia_mappa = {f"{c['collocazione_1']}/{c['collocazione_2']}": c['quantita'] for c in vecchia_collocazione}
         movimenti_tolti = []
         movimenti_aggiunti = []
 
-        # Elabora i dati ricevuti dal form per ogni collocazione
         for collocazione_1, collocazione_2, quantita in zip(
-                request.form.getlist('collocazione_1[]'), 
-                request.form.getlist('collocazione_2[]'), 
-                request.form.getlist('quantita[]')):
+            request.form.getlist('collocazione_1[]'), 
+            request.form.getlist('collocazione_2[]'), 
+            request.form.getlist('quantita[]')):
 
-            if collocazione_1 and collocazione_2 and quantita:
-                chiave = f"{collocazione_1}/{collocazione_2}"
+            if collocazione_1 and collocazione_2:
                 quantita = int(quantita)
+                chiave = f"{collocazione_1}/{collocazione_2}"
 
+                # Se la chiave esiste nella vecchia mappa, calcoliamo la differenza
                 if chiave in vecchia_mappa:
                     differenza = quantita - vecchia_mappa[chiave]
                     if differenza > 0:
                         movimenti_aggiunti.append(f"{chiave} ({differenza})")
                     elif differenza < 0:
                         movimenti_tolti.append(f"{chiave} ({-differenza})")
-                    # Rimuoviamo l'elemento già gestito
                     del vecchia_mappa[chiave]
                 else:
                     movimenti_aggiunti.append(f"{chiave} ({quantita})")
 
+                # Aggiungi la collocazione alle nuove collocazioni, anche se la quantità è zero
                 nuove_collocazioni.append({
                     'collocazione_1': collocazione_1,
                     'collocazione_2': collocazione_2,
                     'quantita': quantita
                 })
-                quantita_totale += quantita
 
-        # Tutte le collocazioni rimanenti in vecchia_mappa sono state rimosse
+                # Somma solo le quantità positive per il totale
+                quantita_totale += max(quantita, 0)  # Somma anche se zero, per mantenere la collocazione
+
+        # Eventuali collocazioni residue in vecchia_mappa sono state tolte completamente
         for chiave, quantita in vecchia_mappa.items():
             movimenti_tolti.append(f"{chiave} ({quantita})")
 
-        # Aggiorna il prodotto nel database con le nuove collocazioni
-        if nuove_collocazioni:
-            bottiglie_collection.update_one(
-                {'_id': ObjectId(id)},
-                {'$set': {
-                    'collocazioni': nuove_collocazioni,
-                    'quantita_totale': quantita_totale
-                }}
+        bottiglie_collection.update_one(
+            {'_id': ObjectId(id)},
+            {'$set': {
+                'collocazioni': nuove_collocazioni,
+                'quantita_totale': quantita_totale
+            }}
+        )
+
+        movimento_descrizione = []
+        if movimenti_tolti:
+            movimento_descrizione.append(f"Tolte {sum(int(x.split('(')[1].replace(')', '')) for x in movimenti_tolti)} da {', '.join(movimenti_tolti)}")
+        if movimenti_aggiunti:
+            movimento_descrizione.append(f"Aggiunte {sum(int(x.split('(')[1].replace(')', '')) for x in movimenti_aggiunti)} a {', '.join(movimenti_aggiunti)}")
+
+        if movimento_descrizione:
+            registra_movimento(
+                utente=current_user.username,
+                descrizione=prodotto['descrizione'],
+                quantita=quantita_totale,
+                collocazione_origine=None if not movimenti_tolti else ', '.join(movimenti_tolti),
+                collocazione_destinazione=None if not movimenti_aggiunti else ', '.join(movimenti_aggiunti),
+                tipo_movimento=tipo_movimento,
+                orario=orario,
+                prodotto_id=str(prodotto['_id'])
             )
 
-            # Costruzione del messaggio di log solo se ci sono cambiamenti
-            movimento_descrizione = []
-            if movimenti_tolti:
-                movimento_descrizione.append(f"Tolte {sum(int(x.split('(')[1].replace(')', '')) for x in movimenti_tolti)} da {', '.join(movimenti_tolti)}")
-            if movimenti_aggiunti:
-                movimento_descrizione.append(f"Aggiunte {sum(int(x.split('(')[1].replace(')', '')) for x in movimenti_aggiunti)} a {', '.join(movimenti_aggiunti)}")
-
-            # Registra i movimenti solo se c'è stato un cambiamento
-            if movimento_descrizione:
-                registra_movimento(
-                    utente=current_user.username,
-                    descrizione=prodotto['descrizione'],
-                    quantita=quantita_totale,
-                    collocazione_origine=None if not movimenti_tolti else ', '.join(movimenti_tolti),
-                    collocazione_destinazione=None if not movimenti_aggiunti else ', '.join(movimenti_aggiunti),
-                    tipo_movimento=tipo_movimento,
-                    orario=orario,
-                    prodotto_id=str(prodotto['_id'])
-                )
-
-            flash('Giacenze modificate con successo!')
-        else:
-            flash('Nessuna modifica alle giacenze.')
-
-        return redirect(url_for('lista_prodotti'))
+        flash('Giacenze modificate con successo!', 'success')
+        return redirect(url_for('giacenze'))
 
     return render_template('modifica_giacenze.html', prodotto=prodotto)
+
+@app.route('/assegna_riquadro', methods=['POST'])
+@login_required
+def assegna_riquadro():
+    data = request.get_json()
+    bottiglia_id = data['bottiglia_id']
+    area = data['area']
+    sotto_area = data['sotto_area']
+    assegnazioni = data['assegnazioni']
+
+    bottiglia = bottiglie_collection.find_one({'_id': ObjectId(bottiglia_id)})
+    if not bottiglia:
+        return jsonify({'success': False, 'message': 'Bottiglia non trovata'})
+
+    for assegnazione in assegnazioni:
+        riquadro = assegnazione['riquadro']
+        quantita = int(assegnazione['quantita'])
+
+        for collocazione in bottiglia['collocazioni']:
+            if collocazione['collocazione_1'] == area and collocazione['collocazione_2'] == sotto_area and not collocazione.get('riquadro'):
+                collocazione['riquadro'] = riquadro
+                collocazione['quantita'] = quantita
+                break
+        else:
+            bottiglia['collocazioni'].append({
+                'collocazione_1': area,
+                'collocazione_2': sotto_area,
+                'riquadro': riquadro,
+                'quantita': quantita
+            })
+
+    bottiglie_collection.update_one({'_id': ObjectId(bottiglia_id)}, {'$set': {'collocazioni': bottiglia['collocazioni']}})
+    return jsonify({'success': True})
 
 # ---------------------------
 # Movimenti
@@ -426,9 +444,9 @@ def modifica_giacenze(id):
 @app.route('/movimenti')
 @login_required
 def movimenti():
-    movimenti_lista = list(movimenti_collection.find().sort("orario", -1))  # Ordina per orario decrescente
+    movimenti_lista = list(movimenti_collection.find().sort("orario", -1)) 
     for movimento in movimenti_lista:
-        movimento['_id'] = str(movimento['_id'])  # Converti ObjectId in stringa
+        movimento['_id'] = str(movimento['_id']) 
 
     return render_template('movimenti.html', movimenti=movimenti_lista)
 
@@ -455,14 +473,12 @@ def modifica_configurazione(id):
             'categoria': request.form['categoria'],
             'reparto': request.form['reparto'],
             'prezzo_base': float(request.form['prezzo_base']),
-            'codice_a_barre': request.form['codice_a_barre'],  # Include il codice a barre
+            'codice_a_barre': request.form['codice_a_barre'], 
         }
         
-        # Solo se il costo è presente, lo aggiorna
         if 'costo' in request.form and request.form['costo']:
             aggiornamenti['costo'] = float(request.form['costo'])
         
-        # Aggiungiamo il campo riquadro solo se presente nel form
         if 'riquadro' in request.form and request.form['riquadro']:
             aggiornamenti['riquadro'] = request.form['riquadro']
         
@@ -500,7 +516,19 @@ def elimina_massiva_configurazione():
 @app.route('/cerca_bottiglia_ajax', methods=['GET'])
 @login_required
 def cerca_bottiglia_ajax():
-    query = request.args.get('query', '')
+    codici = request.args.get('codici', '')
+    if codici:
+        codici_lista = codici.split(',')
+        risultati = list(bottiglie_collection.find({
+            'codice_a_barre': {'$in': codici_lista}
+        }))
+        return jsonify([{'descrizione': b['descrizione'], 'codice_a_barre': b['codice_a_barre']} for b in risultati])
+    return jsonify([])
+
+@app.route('/cerca_bottiglia_ajax_dashboard', methods=['GET'])
+@login_required
+def cerca_bottiglia_ajax_dashboard():
+    query = request.args.get('query', '').strip()
     if query:
         risultati = list(bottiglie_collection.find({
             '$or': [
@@ -508,8 +536,9 @@ def cerca_bottiglia_ajax():
                 {'codice_a_barre': {'$regex': query, '$options': 'i'}}
             ]
         }))
-        return jsonify([{'_id': str(b['_id']), 'descrizione': b['descrizione'], 'codice_a_barre': b['codice_a_barre']} for b in risultati])
+        return jsonify([{'_id': str(b['_id']), 'descrizione': b['descrizione']} for b in risultati])
     return jsonify([])
+
 
 @app.route('/cerca', methods=['GET'])
 @login_required
@@ -531,7 +560,13 @@ def scheda_bottiglia(id):
         flash('Bottiglia non trovata.')
         return redirect(url_for('dashboard'))
 
-    # Aggregare le collocazioni per sommare le quantità nella stessa posizione
+    # Recupera il reparto associato
+    reparto = reparti_collection.find_one({'nome': bottiglia['reparto']})
+
+    # Aggiungi il valore del reparto all'oggetto bottiglia, se il reparto esiste
+    if reparto:
+        bottiglia['reparto_valore'] = reparto.get('valore', 'N/A')
+
     collocazioni_aggregate = {}
     for collocazione in bottiglia.get('collocazioni', []):
         chiave = f"{collocazione['collocazione_1']}/{collocazione['collocazione_2']}"
@@ -540,10 +575,8 @@ def scheda_bottiglia(id):
         else:
             collocazioni_aggregate[chiave] = collocazione['quantita']
 
-    # Convertire il dizionario in una lista per la visualizzazione nel template
     collocazioni_aggregate_list = [{'collocazione': k, 'quantita': v} for k, v in collocazioni_aggregate.items()]
 
-# Logica per visualizzare i dettagli della bottiglia
     return render_template('bottiglia.html', bottiglia=bottiglia)
 
 @app.route('/prodotti')
@@ -552,6 +585,9 @@ def lista_prodotti():
     bottiglie_info = list(bottiglie_collection.find().sort("descrizione", 1))
     return render_template('prodotti.html', bottiglie_info=bottiglie_info)
 
+
+import requests
+from flask import request, redirect, url_for, flash
 
 @app.route('/crea_prodotto', methods=['GET', 'POST'])
 @login_required
@@ -573,14 +609,20 @@ def crea_prodotto():
         
         collocazioni = []
         quantita_totale = 0
-        for collocazione_1, collocazione_2, quantita in zip(request.form.getlist('collocazione_1[]'), request.form.getlist('collocazione_2[]'), request.form.getlist('quantita[]')):
-            if collocazione_1 and collocazione_2 and quantita:
-                collocazioni.append({
-                    'collocazione_1': collocazione_1,
-                    'collocazione_2': collocazione_2,
-                    'quantita': int(quantita)
-                })
-                quantita_totale += int(quantita)
+        
+        collocazione_1_list = request.form.getlist('collocazione_1[]')
+        collocazione_2_list = request.form.getlist('collocazione_2[]')
+        quantita_list = request.form.getlist('quantita[]')
+        
+        if collocazione_1_list and collocazione_2_list and quantita_list:
+            for collocazione_1, collocazione_2, quantita in zip(collocazione_1_list, collocazione_2_list, quantita_list):
+                if collocazione_1 and collocazione_2 and quantita:
+                    collocazioni.append({
+                        'collocazione_1': collocazione_1,
+                        'collocazione_2': collocazione_2,
+                        'quantita': int(quantita)
+                    })
+                    quantita_totale += int(quantita)
 
         nuovo_prodotto = {
             'descrizione': descrizione,
@@ -594,8 +636,49 @@ def crea_prodotto():
             'collocazioni': collocazioni
         }
         
+        # Inserisci il prodotto nel database locale
         bottiglie_collection.insert_one(nuovo_prodotto)
-        flash('Prodotto aggiunto con successo!')
+        
+        # Creazione del prodotto in Cassa in Cloud tramite API
+        access_token = 'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxMzU3NiIsImlzcyI6Im5pY29sb0BzcGF6aW91YXUuaXQiLCJleHAiOjE3MjUwOTY4NzAsInNjb3BlIjoicmVhZCwgd3JpdGUiLCJhbGxvd0FjY291bnRPcGVyYXRpb24iOmZhbHNlLCJ3ZWJNZW51IjpmYWxzZSwiaWRzU2FsZXNQb2ludCI6IjE1NTU2In0.saVB30afDrij1mh3iYkBOexIcE0ES1fkxCTV6eGgF24vEz6lg4RP86U4uxRBBVqca-3KhWnFxqfDhRSc7t7_Yw'
+        api_url = 'https://api.cassanova.com/products'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {access_token}',
+            'X-Version': '1.0.0'
+        }
+
+        data = {
+            'description': descrizione,
+            'descriptionLabel': descrizione,
+            'descriptionExtended': descrizione,
+            'idDepartment': reparto,
+            'idCategory': categoria,
+            'prices': [{'idSalesMode': 'default', 'idSalesPoint': 1, 'value': prezzo_base}],
+            'barcodes': [{'value': codice_a_barre, 'format': 'EAN13', 'salable': True}]
+        }
+
+        # Logging prima della richiesta
+        app.logger.debug(f"Request URL: {api_url}")
+        app.logger.debug(f"Headers: {headers}")
+        app.logger.debug(f"Data: {data}")
+
+        try:
+            response = requests.post(api_url, json=data, headers=headers)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as http_err:
+            app.logger.error(f"HTTP error occurred: {http_err}")
+            flash('Errore HTTP durante l\'interazione con Cassa in Cloud.', 'danger')
+        except Exception as err:
+            app.logger.error(f"Other error occurred: {err}")
+            flash('Errore durante l\'interazione con Cassa in Cloud.', 'danger')
+        else:
+            if response.status_code == 201:
+                flash('Prodotto aggiunto con successo anche in Cassa in Cloud!', 'success')
+            else:
+                flash('Prodotto aggiunto localmente, ma c\'è stato un errore in Cassa in Cloud.', 'danger')
+                app.logger.error(f"Errore Cassa in Cloud: {response.status_code} - {response.text}")
+
         return redirect(url_for('lista_prodotti'))
 
     categorie = list(categorie_collection.find().sort("nome", 1))
@@ -640,7 +723,7 @@ def modifica_reparto(id):
     
     return render_template('modifica_reparto.html', reparto=reparto)
 
-@app.route('/reparti/elimina/<id>')
+@app.route('/reparti/elimina/<id>', methods=['GET', 'POST'])
 @login_required
 def elimina_reparto(id):
     reparto = reparti_collection.find_one({'_id': ObjectId(id)})
@@ -759,20 +842,135 @@ def elimina_attributo(id):
 # Configurazione del Magazzino
 # ---------------------------
 
+@app.route('/salva_codici_a_barre', methods=['POST'])
+@login_required
+def salva_codici_a_barre():
+    area = request.form.get('area')
+    sotto_area = request.form.get('sotto_area')
+    riquadro = request.form.get('riquadro')
+    codici_a_barre = request.form.get('codici_a_barre').splitlines()
+
+    for codice in codici_a_barre:
+        codice = codice.strip()
+        if not codice:
+            continue
+
+        # Cerca la bottiglia nel database
+        bottiglia = bottiglie_collection.find_one({'codice_a_barre': codice})
+        
+        if bottiglia:
+            # Aggiungi la bottiglia alla collocazione e riquadro specificato
+            nuova_collocazione = {
+                'collocazione_1': area,
+                'collocazione_2': sotto_area,
+                'riquadro': riquadro,
+                'quantita': 1  # Aggiungi la quantità desiderata qui
+            }
+
+            if 'collocazioni' in bottiglia:
+                bottiglia['collocazioni'].append(nuova_collocazione)
+            else:
+                bottiglia['collocazioni'] = [nuova_collocazione]
+
+            bottiglia['quantita_totale'] = bottiglia.get('quantita_totale', 0) + 1
+
+            # Aggiorna il documento della bottiglia nel database
+            bottiglie_collection.update_one(
+                {'_id': ObjectId(bottiglia['_id'])},
+                {'$set': {
+                    'collocazioni': bottiglia['collocazioni'],
+                    'quantita_totale': bottiglia['quantita_totale']
+                }}
+            )
+        else:
+            flash(f'Bottiglia con codice a barre {codice} non trovata.', 'danger')
+
+    flash('Codici a barre salvati con successo!', 'success')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/configura_riquadro/<area>/<sotto_area>/<riquadro>', methods=['GET', 'POST'])
+@login_required
+def configura_riquadro(area, sotto_area, riquadro):
+    if request.method == 'POST':
+        # Ottieni i codici a barre dal textarea
+        codici_a_barre = request.form.get('codici_a_barre_textarea').splitlines()
+
+        # Processa ciascun codice a barre
+        for codice in codici_a_barre:
+            codice = codice.strip()
+            if not codice:
+                continue
+
+            # Cerca la bottiglia nel database utilizzando il codice a barre
+            bottiglia = bottiglie_collection.find_one({'codice_a_barre': codice})
+
+            if bottiglia:
+                # Verifica se la collocazione esiste già
+                collocazione_trovata = False
+                for collocazione in bottiglia.get('collocazioni', []):
+                    if (collocazione['collocazione_1'] == area and
+                        collocazione['collocazione_2'] == sotto_area and
+                        collocazione['riquadro'] == riquadro):
+                        # Incrementa la quantità della bottiglia nella collocazione esistente
+                        collocazione['quantita'] += 1
+                        collocazione_trovata = True
+                        break
+
+                if not collocazione_trovata:
+                    # Se la collocazione non esiste, aggiungila
+                    nuova_collocazione = {
+                        'collocazione_1': area,
+                        'collocazione_2': sotto_area,
+                        'riquadro': riquadro,
+                        'quantita': 1
+                    }
+                    bottiglia['collocazioni'].append(nuova_collocazione)
+
+                # Aggiorna la quantità totale della bottiglia
+                bottiglia['quantita_totale'] = bottiglia.get('quantita_totale', 0) + 1
+
+                # Aggiorna il documento della bottiglia nel database
+                bottiglie_collection.update_one(
+                    {'_id': bottiglia['_id']},
+                    {'$set': {
+                        'collocazioni': bottiglia['collocazioni'],
+                        'quantita_totale': bottiglia['quantita_totale']
+                    }}
+                )
+
+                # Registra il movimento
+                registra_movimento(
+                    utente=current_user.username,
+                    descrizione=bottiglia['descrizione'],
+                    quantita=1,  # Poiché si sta inserendo una bottiglia alla volta
+                    collocazione_origine=None,
+                    collocazione_destinazione=f'{area}/{sotto_area}/{riquadro}',
+                    tipo_movimento='Configurazione Riquadro',
+                    orario=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    prodotto_id=str(bottiglia['_id'])
+                )
+            else:
+                flash(f'Bottiglia con codice a barre {codice} non trovata.', 'danger')
+
+        flash('Configurazione del riquadro completata con successo!', 'success')
+        return redirect(url_for('dashboard'))
+
+    # Renderizza il template per inserire i codici a barre
+    return render_template('configura_riquadro.html', area=area, sotto_area=sotto_area, riquadro=riquadro)
+
 @app.route('/bottiglie_da_posizionare', methods=['GET'])
 @login_required
 def bottiglie_da_posizionare():
     area = request.args.get('area')
     sotto_area = request.args.get('sotto_area')
 
-    # Trova tutte le bottiglie configurate ma non ancora posizionate in un riquadro
     bottiglie_da_posizionare = list(bottiglie_collection.find({
         'collocazioni.collocazione_1': area,
         'collocazioni.collocazione_2': sotto_area,
         'collocazioni.riquadro': None
     }))
 
-    # Calcola il numero totale di bottiglie non posizionate
     totale_bottiglie = sum(int(collocazione['quantita']) 
                            for bottiglia in bottiglie_da_posizionare 
                            for collocazione in bottiglia['collocazioni'] 
@@ -792,7 +990,6 @@ def posiziona_bottiglie():
     sotto_area = request.form.get('sotto_area')
     riquadro = request.form.get('riquadro')
 
-    # Trova tutte le bottiglie configurate ma non ancora posizionate in un riquadro
     bottiglie_da_posizionare = list(bottiglie_collection.find({
         'collocazioni.collocazione_1': area,
         'collocazioni.collocazione_2': sotto_area,
@@ -812,7 +1009,6 @@ def posiziona_bottiglie():
     flash('Le bottiglie sono state posizionate con successo nel riquadro selezionato!')
     return redirect(url_for('dashboard'))
 
-
 @app.route('/aggiorna_riquadro', methods=['GET'])
 @login_required
 def aggiorna_riquadro():
@@ -823,30 +1019,6 @@ def aggiorna_riquadro():
     flash('Tutte le bottiglie senza riquadro sono state aggiornate.')
     return redirect(url_for('dashboard'))
 
-from flask import flash, redirect, url_for
-
-@app.route('/configura_riquadro', methods=['POST'])
-@login_required
-def configura_riquadro():
-    try:
-        # Logica per configurare il riquadro
-        bottiglia_id = request.form.get('bottiglia_id')
-        riquadro = request.form.get('riquadro')
-
-        # Esempio di logica di salvataggio
-        result = aggiungi_bottiglia_a_riquadro(bottiglia_id, riquadro)
-
-        if result:  # Supponendo che 'result' sia True se l'operazione è riuscita
-            flash('Configurazione andata a buon fine', 'success')
-        else:
-            flash('Configurazione non andata a buon fine', 'danger')
-
-    except Exception as e:
-        flash(f'Errore durante la configurazione: {str(e)}', 'danger')
-
-    return redirect(url_for('seleziona_area_sotto_area'))  # O la pagina dove vuoi reindirizzare l'utente
-
-
 @app.route('/ricerca_riquadri', methods=['GET', 'POST'])
 @login_required
 def ricerca_riquadri():
@@ -854,7 +1026,6 @@ def ricerca_riquadri():
         area = request.form.get('area')
         sotto_area = request.form.get('sotto_area')
 
-        # Logica per determinare i riquadri disponibili
         if area == "Sala Principale" and sotto_area == "Frighi":
             riquadri_disponibili = ['Frigo Sx', 'Frigo Dx']
         else:
@@ -868,7 +1039,6 @@ def ricerca_riquadri():
     
     return render_template('seleziona_area_sotto_area.html')
 
-
 @app.route('/visualizza_riquadro', methods=['GET'])
 @login_required
 def visualizza_riquadro():
@@ -876,27 +1046,38 @@ def visualizza_riquadro():
     sotto_area = request.args.get('sotto_area')
     riquadro = request.args.get('riquadro')
 
-    # Recupera le bottiglie nel riquadro specifico
     bottiglie_posizionate = list(bottiglie_collection.find({
         'collocazioni.collocazione_1': area,
         'collocazioni.collocazione_2': sotto_area,
         'collocazioni.riquadro': riquadro
     }))
 
-    # Calcola il valore totale del riquadro e somma le quantità
     valore_totale_riquadro = 0
     totale_quantita = 0
+
+    bottiglie_dettagli = []
+
     for bottiglia in bottiglie_posizionate:
         for collocazione in bottiglia['collocazioni']:
-            if 'riquadro' in collocazione and collocazione['riquadro'] == riquadro:
+            if (collocazione.get('collocazione_1') == area and 
+                collocazione.get('collocazione_2') == sotto_area and 
+                collocazione.get('riquadro') == riquadro):
+                
                 valore_totale_riquadro += float(bottiglia['prezzo_base']) * int(collocazione['quantita'])
                 totale_quantita += int(collocazione['quantita'])
+
+                bottiglie_dettagli.append({
+                    'descrizione': bottiglia['descrizione'],
+                    'quantita': collocazione['quantita'],
+                    'categoria': bottiglia.get('categoria', 'N/A'), 
+                    'prezzo_base': bottiglia['prezzo_base']
+                })
 
     return render_template('visualizza_riquadro.html', 
                            area=area, 
                            sotto_area=sotto_area, 
                            riquadro=riquadro, 
-                           bottiglie=bottiglie_posizionate, 
+                           bottiglie=bottiglie_dettagli,  
                            valore_totale_riquadro=valore_totale_riquadro,
                            totale_quantita=totale_quantita)
 
@@ -930,22 +1111,19 @@ def visione_riquadri(area, sotto_area, frigo=None):
 @login_required
 def assegna_bottiglia_ajax():
     codice_a_barre = request.args.get('codice_a_barre', '').strip()
-    print(f"Codice a barre ricevuto: {codice_a_barre}")  # Debugging
+    print(f"Codice a barre ricevuto: {codice_a_barre}")
     if codice_a_barre:
         bottiglia = bottiglie_collection.find_one({'codice_a_barre': codice_a_barre})
         if bottiglia:
-            print(f"Bottiglia trovata: {bottiglia.get('nome')}")  # Debugging
+            print(f"Bottiglia trovata: {bottiglia.get('nome')}")
             return jsonify({'Descrizione': bottiglia.get('nome')})
-    print("Bottiglia non trovata o codice a barre mancante")  # Debugging
+    print("Bottiglia non trovata o codice a barre mancante")
     return jsonify({'Descrizione': None})
 
 @app.route('/aggiungi_bottiglie_riquadro', methods=['POST'])
 @login_required
 def aggiungi_bottiglie_riquadro():
-    # Recupera il valore del riquadro dal form
     riquadro = request.form.get('riquadro').strip()
-
-    # Ottieni i codici a barre dalla textarea
     codici_a_barre = request.form.get('codici_a_barre_textarea').splitlines()
 
     for codice in codici_a_barre:
@@ -953,16 +1131,14 @@ def aggiungi_bottiglie_riquadro():
         if not codice:
             continue
 
-        # Cerca la bottiglia nel database
         bottiglia = bottiglie_collection.find_one({'codice_a_barre': codice})
         
         if bottiglia:
-            # Aggiungi la bottiglia alla collocazione e riquadro specificato
             nuova_collocazione = {
-                'collocazione_1': 'Sala Principale',  # Modifica con la tua logica di collocazione
-                'collocazione_2': 'Scaffali',  # Modifica con la tua logica di collocazione
-                'riquadro': riquadro,  # Aggiungi il riquadro
-                'quantita': 1  # Aggiungi la quantità desiderata qui
+                'collocazione_1': 'Sala Principale',  
+                'collocazione_2': 'Scaffali',  
+                'riquadro': riquadro,  
+                'quantita': 1  
             }
 
             if 'collocazioni' in bottiglia:
@@ -972,7 +1148,6 @@ def aggiungi_bottiglie_riquadro():
 
             bottiglia['quantita_totale'] = bottiglia.get('quantita_totale', 0) + 1
 
-            # Aggiorna il documento della bottiglia nel database
             bottiglie_collection.update_one(
                 {'_id': bottiglia['_id']},
                 {'$set': {
@@ -997,7 +1172,6 @@ def visione_magazzino():
         area = request.form.get('area')
         sotto_area = request.form.get('sotto_area')
 
-        # Logica per determinare i riquadri disponibili
         if area == "Sala Principale" and sotto_area == "Frighi":
             riquadri_disponibili = ['Frigo Sx', 'Frigo Dx']
         else:
@@ -1007,10 +1181,9 @@ def visione_magazzino():
             return render_template('visione_magazzino.html', riquadri_disponibili=riquadri_disponibili, area=area, sotto_area=sotto_area)
         else:
             flash('Non ci sono riquadri disponibili per l\'area e la sotto-area selezionata.', 'warning')
-            return redirect(url_for('visione_magazzino'))  # Corretto da '_seleziona_area_sotto_area' a 'visione_magazzino'
+            return redirect(url_for('visione_magazzino'))
     
     return render_template('seleziona_area_sotto_area_magazzino.html')
-
 
 @app.route('/configura_bottiglia', methods=['POST'])
 @login_required
@@ -1030,7 +1203,7 @@ def configura_bottiglia():
             nuova_collocazione = {
                 'collocazione_1': area,
                 'collocazione_2': sotto_area,
-                'riquadro': None,  # Inizialmente nessun riquadro assegnato
+                'riquadro': None,
                 'quantita': 1
             }
 
@@ -1061,7 +1234,6 @@ def inserisci_bottiglia_riquadro():
     sotto_area = request.args.get('sotto_area')
     riquadro = request.args.get('riquadro')
 
-    # Aggiungi log per verificare i dati ricevuti
     app.logger.debug(f"Ricevuto codice a barre: {codice_a_barre}, quantità: {quantita}, area: {area}, sotto_area: {sotto_area}, riquadro: {riquadro}")
 
     if request.method == 'POST':

@@ -80,7 +80,7 @@
         document.getElementById('search-bar').addEventListener('input', function() {
         let query = this.value;
         if (query.length > 0) {
-            fetch(`/cerca_bottiglia_ajax?query=${query}`)
+            fetch(`/cerca_bottiglia_ajax_dashboard?query=${query}`)
             .then(response => response.json())
             .then(data => {
                 let resultsDiv = document.getElementById('search-results');

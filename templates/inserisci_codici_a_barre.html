@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Inserisci Codici a Barre nel Riquadro {{ riquadro }}</h1>
+    <form method="POST" action="{{ url_for('salva_codici_a_barre') }}">
+        <input type="hidden" name="area" value="{{ area }}">
+        <input type="hidden" name="sotto_area" value="{{ sotto_area }}">
+        <input type="hidden" name="riquadro" value="{{ riquadro }}">
+        
+        <!-- Casella di testo per inserire i codici a barre -->
+        <div class="form-group">
+            <label for="codici_a_barre">Inserisci Codici a Barre (uno per riga):</label>
+            <textarea id="codici_a_barre" name="codici_a_barre" class="form-control" rows="10" placeholder="Inserisci i codici a barre qui..."></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Salva</button>
+    </form>
+</div>
+{% endblock %}

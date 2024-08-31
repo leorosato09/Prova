@@ -1,46 +1,61 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="container">
-    <h1>Configura Riquadro</h1>
-    <form method="POST" action="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=riquadro) }}">
-        
-        <!-- Grande casella di testo per inserire i codici a barre -->
-        <div class="form-group">
-            <label for="codici_a_barre_textarea">Inserisci Codici a Barre (uno per riga):</label>
-            <textarea id="codici_a_barre_textarea" name="codici_a_barre_textarea" class="form-control" rows="10" placeholder="Inserisci i codici a barre qui..."></textarea>
-        </div>
+    <h1>Configura Riquadro - {{ area }} / {{ sotto_area }} / {{ riquadro }}</h1>
 
-        <!-- Sezione per mostrare i nomi delle bottiglie trovate -->
+    <!-- Form per inserire codici a barre -->
+    <form id="barcode-form" method="POST" action="{{ url_for('configura_riquadro', area=area, sotto_area=sotto_area, riquadro=riquadro) }}">
         <div class="form-group">
-            <label>Nomi delle Bottiglie:</label>
-            <ul id="nomi_bottiglie_list"></ul>
+            <label for="codici_a_barre_textarea">Inserisci Codici a Barre:</label>
+            <textarea id="codici_a_barre_textarea" name="codici_a_barre_textarea" class="form-control" rows="5"></textarea>
         </div>
-
-        <div class="form-group">
-            <button type="submit" class="btn btn-primary">Salva Configurazione</button>
-        </div>
+        <button type="submit" class="btn btn-primary">Salva Configurazione</button>
     </form>
+
+    <!-- Lista dinamica delle bottiglie trovate -->
+    <h3 class="text-center mt-4">Bottiglie Trovate</h3>
+    <div class="d-flex justify-content-center">
+        <ul id="bottiglie-trovate-list" class="list-group w-50"></ul>
+    </div>
 </div>
 
 <script>
-    document.getElementById('codice_a_barre_input').addEventListener('input', function() {
-    const codiceABarre = this.value.trim();
+document.getElementById('codici_a_barre_textarea').addEventListener('input', function() {
+    const codici = this.value.trim().split('\n').filter(codice => codice.trim() !== '');
+    const codiciCounter = {};
 
-    if (codiceABarre) {
-        fetch(`/assegna_bottiglia_ajax?codice_a_barre=${codiceABarre}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.Descrizione) {
-                    document.getElementById('descrizione').textContent = `Bottiglia: ${data.Descrizione}`;
-                } else {
-                    document.getElementById('descrizione').textContent = 'Bottiglia non trovata';
-                }
-            })
-            .catch(error => {
-                console.error('Errore nel recupero della bottiglia:', error);
-                document.getElementById('descrizione').textContent = 'Errore nel recupero della bottiglia';
-            });
+    codici.forEach(codice => {
+        codiciCounter[codice] = (codiciCounter[codice] || 0) + 1;
+    });
+
+    if (codici.length > 0) {
+        fetch('{{ url_for("cerca_bottiglia_ajax") }}?codici=' + Object.keys(codiciCounter).join(','), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById('bottiglie-trovate-list');
+            list.innerHTML = '';  // Svuota la lista attuale
+            if (data.length > 0) {
+                data.forEach(bottiglia => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item';
+                    listItem.textContent = `${bottiglia.descrizione} x ${codiciCounter[bottiglia.codice_a_barre]}`;
+                    list.appendChild(listItem);
+                });
+            } else {
+                list.innerHTML = '<li class="list-group-item">Nessuna bottiglia trovata.</li>';
+            }
+        })
+        .catch(error => console.error('Errore:', error));
+    } else {
+        document.getElementById('bottiglie-trovate-list').innerHTML = '';
     }
 });
 </script>
+
 {% endblock %}

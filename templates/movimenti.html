@@ -7,8 +7,9 @@
     <table class="table table-striped">
         <thead>
             <tr>
+                <th>Data</th>
                 <th>Descrizione</th>
-                <th>Quantità</th>
+                <th>Quantità Attuale</th>
                 <th>Utente</th>
                 <th>Tipo di Movimento</th>
                 <th>Azioni</th>
@@ -17,6 +18,7 @@
         <tbody>
             {% for movimento in movimenti %}
             <tr>
+                <td>{{ movimento.orario }}</td>
                 <td>{{ movimento.descrizione }}</td>
                 <td>{{ movimento.quantita }}</td>
                 <td>{{ movimento.utente }}</td>
@@ -26,11 +28,11 @@
                 </td>
             </tr>
             <tr id="details-{{ movimento._id }}" style="display:none;">
-                <td colspan="5">
+                <td colspan="6">
                     <div>
                         <strong>Origine:</strong> 
                         {% if movimento.collocazione_origine %}
-                            {{ movimento.collocazione_origine | join(', ') }}
+                            {{ movimento.collocazione_origine }}
                         {% else %}
                             Nessuna
                         {% endif %}
@@ -38,7 +40,7 @@
                     <div>
                         <strong>Destinazione:</strong> 
                         {% if movimento.collocazione_destinazione %}
-                            {{ movimento.collocazione_destinazione | join(', ') }}
+                            {{ movimento.collocazione_destinazione }}
                         {% else %}
                             Nessuna
                         {% endif %}
